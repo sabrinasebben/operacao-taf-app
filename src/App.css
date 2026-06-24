@@ -3027,3 +3027,89 @@ input:focus {
     display: none;
   }
 }
+/* ================================
+   FASE 10.2 — CONFIGURAR EDITAL + HISTÓRICO
+================================ */
+
+.label-with-help {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+}
+
+.help-icon {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(126,211,33,.14);
+  border: 1px solid rgba(126,211,33,.42);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1;
+  cursor: help;
+}
+
+.test-values-grid .label-with-help {
+  margin-bottom: 0;
+}
+
+.test-config-card.selected {
+  position: relative;
+}
+
+.test-config-card.selected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(126,211,33,.14);
+}
+
+.general-progress-chart-wrap {
+  width: 100%;
+  border-radius: 22px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+  border: 1px solid rgba(255,255,255,.10);
+  overflow-x: auto;
+}
+
+.general-progress-chart-wrap svg {
+  width: 100%;
+  min-width: 720px;
+  min-height: 300px;
+  display: block;
+}
+
+.general-progress-line {
+  stroke: var(--green);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px rgba(126,211,33,.38));
+}
+
+.general-target-line {
+  stroke: rgba(255,59,59,.82);
+  stroke-width: 3;
+  stroke-dasharray: 10 10;
+}
+
+.general-progress-point {
+  fill: var(--green);
+  stroke: #071009;
+  stroke-width: 3;
+}
+
+@media (max-width: 720px) {
+  .help-icon {
+    width: 20px;
+    height: 20px;
+  }
+}

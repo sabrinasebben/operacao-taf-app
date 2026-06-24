@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+
+const EDITAL_DRAFT_KEY_PREFIX = 'operacao_taf_edital_draft_'
 
 export default function ConfigurarEdital({ profile }) {
   const navigate = useNavigate()
+  const draftKey = `${EDITAL_DRAFT_KEY_PREFIX}${profile.user_id}`
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -23,6 +26,22 @@ export default function ConfigurarEdital({ profile }) {
     loadInitialData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
+
+  useEffect(() => {
+    if (loading) return
+
+    const draft = {
+      examName,
+      institution,
+      tafDate,
+      sexReference,
+      notes,
+      selectedTests,
+      updatedAt: new Date().toISOString(),
+    }
+
+    localStorage.setItem(draftKey, JSON.stringify(draft))
+  }, [loading, examName, institution, tafDate, sexReference, notes, selectedTests, draftKey])
 
   async function loadInitialData() {
     setLoading(true)
@@ -82,9 +101,29 @@ export default function ConfigurarEdital({ profile }) {
       })
 
       setSelectedTests(mapped)
+    } else {
+      restoreDraft()
     }
 
     setLoading(false)
+  }
+
+  function restoreDraft() {
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return
+
+      const draft = JSON.parse(raw)
+
+      setExamName(draft.examName || profile?.target_exam || '')
+      setInstitution(draft.institution || '')
+      setTafDate(draft.tafDate || '')
+      setSexReference(draft.sexReference || profile?.sex || 'Masculino')
+      setNotes(draft.notes || '')
+      setSelectedTests(draft.selectedTests || {})
+    } catch (error) {
+      localStorage.removeItem(draftKey)
+    }
   }
 
   const groupedTests = useMemo(() => {
@@ -129,20 +168,45 @@ export default function ConfigurarEdital({ profile }) {
       let nextItem = { ...item, [field]: value }
 
       if (field === 'minimum_value') {
-        const numericValue = Number(String(value).replace(',', '.'))
+        const numericValue = parseNumber(value)
 
-        if (numericValue > 0 && !item.safe_goal_value) {
-          const safeGoal =
-            item.calculation_type === 'lower_is_better'
-              ? numericValue * 0.9
-              : numericValue * 1.1
+        if (numericValue > 0) {
+          const suggested = suggestSafeGoal(item, numericValue)
+          const previousMinimum = parseNumber(item.minimum_value)
+          const previousSuggestion = previousMinimum > 0 ? suggestSafeGoal(item, previousMinimum) : ''
 
-          nextItem.safe_goal_value = formatNumber(safeGoal)
+          const shouldReplaceSafeGoal =
+            !item.safe_goal_value ||
+            parseNumber(item.safe_goal_value) === parseNumber(previousSuggestion) ||
+            parseNumber(item.safe_goal_value) === previousMinimum
+
+          if (shouldReplaceSafeGoal) {
+            nextItem.safe_goal_value = suggested
+          }
         }
       }
 
       return { ...current, [testId]: nextItem }
     })
+  }
+
+  function applySafeGoalsToSelected() {
+    setSelectedTests((current) => {
+      const updated = {}
+
+      Object.entries(current).forEach(([testId, item]) => {
+        const minimum = parseNumber(item.minimum_value)
+
+        updated[testId] = {
+          ...item,
+          safe_goal_value: minimum > 0 ? suggestSafeGoal(item, minimum) : item.safe_goal_value,
+        }
+      })
+
+      return updated
+    })
+
+    setMessage('Metas seguras sugeridas automaticamente. Revise antes de salvar.')
   }
 
   async function handleSave(event) {
@@ -153,7 +217,7 @@ export default function ConfigurarEdital({ profile }) {
     const selectedList = Object.values(selectedTests).filter((item) => item.selected)
 
     if (!examName.trim()) {
-      setMessage('Informe o nome do concurso ou edital.')
+      setMessage('Informe o nome do cargo ou função.')
       setSaving(false)
       return
     }
@@ -287,6 +351,7 @@ export default function ConfigurarEdital({ profile }) {
       })
       .eq('user_id', profile.user_id)
 
+    localStorage.removeItem(draftKey)
     setSaving(false)
     navigate('/area-do-aluno')
   }
@@ -322,10 +387,10 @@ export default function ConfigurarEdital({ profile }) {
         </div>
 
         <nav className="app-nav">
-          <a href="/area-do-aluno">Dashboard</a>
-          <a href="/configurar-edital">Configurar Edital</a>
-          <a href="/calculadora-premium">Calculadora</a>
-          <a href="/historico">Histórico</a>
+          <Link to="/area-do-aluno">Dashboard</Link>
+          <Link to="/configurar-edital">Configurar Edital</Link>
+          <Link to="/calculadora-premium">Calculadora</Link>
+          <Link to="/historico">Histórico</Link>
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -337,7 +402,7 @@ export default function ConfigurarEdital({ profile }) {
               <div className="kicker">Etapa obrigatória</div>
               <h1>Configure seu edital</h1>
               <p>
-                Selecione as provas cobradas no seu concurso, informe o índice mínimo e defina uma meta segura.
+                Selecione as provas cobradas no edital, informe o índice mínimo e defina uma meta segura.
               </p>
             </div>
 
@@ -347,18 +412,18 @@ export default function ConfigurarEdital({ profile }) {
           <section className="premium-panel">
             <div className="panel-head">
               <div>
-                <div className="kicker">Dados do concurso</div>
+                <div className="kicker">Dados do edital</div>
                 <h2>Informações do edital</h2>
               </div>
             </div>
 
             <div className="exam-form-grid">
               <label>
-                Nome do concurso
+                Nome do cargo
                 <input
                   value={examName}
                   onChange={(event) => setExamName(event.target.value)}
-                  placeholder="Ex.: Brigada Militar RS"
+                  placeholder="Ex.: Soldado BM, Inspetor, Bombeiro Militar"
                 />
               </label>
 
@@ -411,9 +476,15 @@ export default function ConfigurarEdital({ profile }) {
                 <h2>Selecione e preencha os índices</h2>
               </div>
 
-              <button className="btn btn-green" type="submit" disabled={saving}>
-                {saving ? 'Salvando...' : 'Salvar edital'}
-              </button>
+              <div className="panel-actions">
+                <button className="btn btn-dark" type="button" onClick={applySafeGoalsToSelected}>
+                  Sugerir metas
+                </button>
+
+                <button className="btn btn-green" type="submit" disabled={saving}>
+                  {saving ? 'Salvando...' : 'Salvar edital'}
+                </button>
+              </div>
             </div>
 
             {message && <div className="form-message">{message}</div>}
@@ -453,18 +524,26 @@ export default function ConfigurarEdital({ profile }) {
                                   onChange={(event) =>
                                     updateSelectedField(test.id, 'minimum_value', event.target.value)
                                   }
-                                  placeholder="Ex.: 2400"
+                                  placeholder={minimumPlaceholderForTest(selected)}
                                 />
                               </label>
 
                               <label>
-                                Meta segura
+                                <span className="label-with-help">
+                                  Meta segura
+                                  <span
+                                    className="help-icon"
+                                    title="Meta segura é uma marca acima do mínimo do edital. Ela cria margem para variação no dia da prova, cansaço, nervosismo e pequenas diferenças de execução."
+                                  >
+                                    ?
+                                  </span>
+                                </span>
                                 <input
                                   value={selected.safe_goal_value}
                                   onChange={(event) =>
                                     updateSelectedField(test.id, 'safe_goal_value', event.target.value)
                                   }
-                                  placeholder="Ex.: 2600"
+                                  placeholder={safeGoalPlaceholderForTest(selected)}
                                 />
                               </label>
                             </div>
@@ -478,9 +557,9 @@ export default function ConfigurarEdital({ profile }) {
             </div>
 
             <div className="save-footer">
-              <a className="btn btn-dark" href="/area-do-aluno">
+              <Link className="btn btn-dark" to="/area-do-aluno">
                 Cancelar
-              </a>
+              </Link>
 
               <button className="btn btn-green" type="submit" disabled={saving}>
                 {saving ? 'Salvando edital...' : 'Salvar edital e liberar diagnóstico'}
@@ -496,4 +575,84 @@ export default function ConfigurarEdital({ profile }) {
 function formatNumber(value) {
   if (!Number.isFinite(value)) return ''
   return String(Number(value.toFixed(2))).replace('.', ',')
+}
+
+function parseNumber(value) {
+  if (value === null || value === undefined) return 0
+  const number = Number(String(value).replace(',', '.'))
+  return Number.isNaN(number) ? 0 : number
+}
+
+function suggestSafeGoal(test, minimumValue) {
+  const name = String(test?.test_name || '').toLowerCase()
+  const unit = String(test?.unit || '').toLowerCase()
+  const calculationType = test?.calculation_type
+
+  if (!minimumValue || minimumValue <= 0) return ''
+
+  if (calculationType === 'lower_is_better') {
+    return formatNumber(minimumValue * 0.9)
+  }
+
+  if (name.includes('12 minutos')) return String(Math.ceil((minimumValue + 200) / 50) * 50)
+  if (name.includes('2400') || name.includes('2000') || name.includes('1800')) return formatNumber(minimumValue * 0.95)
+  if (name.includes('barra')) return String(Math.ceil(minimumValue + 3))
+  if (name.includes('isometria')) return String(Math.ceil(minimumValue + 10))
+  if (name.includes('flexão')) return String(Math.ceil(minimumValue + 5))
+  if (name.includes('abdominal')) return String(Math.ceil(minimumValue + 5))
+  if (name.includes('meio sugado')) return String(Math.ceil(minimumValue + 5))
+  if (name.includes('salto') || name.includes('impulsão')) return formatNumber(minimumValue * 1.1)
+  if (unit.includes('metros')) return formatNumber(minimumValue * 1.1)
+  if (unit.includes('repet')) return String(Math.ceil(minimumValue * 1.15))
+
+  return formatNumber(minimumValue * 1.1)
+}
+
+function getExampleValuesForTest(test) {
+  const name = String(test?.test_name || '').toLowerCase()
+  const unit = String(test?.unit || '').toLowerCase()
+  const lowerIsBetter = test?.calculation_type === 'lower_is_better'
+
+  if (name.includes('12 minutos')) return { minimum: '2400', safe: '2600' }
+  if (name.includes('2400')) return { minimum: '720', safe: '660' }
+  if (name.includes('2000')) return { minimum: '720', safe: '660' }
+  if (name.includes('1800')) return { minimum: '720', safe: '660' }
+  if (name.includes('barra')) return { minimum: '5', safe: '8' }
+  if (name.includes('isometria')) return { minimum: '30', safe: '45' }
+  if (name.includes('flexão')) return { minimum: '25', safe: '35' }
+  if (name.includes('abdominal')) return { minimum: '35', safe: '45' }
+  if (name.includes('meio sugado')) return { minimum: '20', safe: '25' }
+  if (name.includes('shuttle')) return { minimum: '12,5', safe: '11,8' }
+  if (name.includes('natação 50')) return { minimum: '60', safe: '54' }
+  if (name.includes('natação 100')) return { minimum: '120', safe: '108' }
+  if (name.includes('natação 200')) return { minimum: '260', safe: '235' }
+  if (name.includes('corrida 50')) return { minimum: '8,0', safe: '7,5' }
+  if (name.includes('corrida 100')) return { minimum: '15,0', safe: '14,0' }
+  if (name.includes('impulsão')) return { minimum: '2,00', safe: '2,20' }
+  if (name.includes('salto em distância')) return { minimum: '3,50', safe: '3,85' }
+  if (name.includes('salto em altura')) return { minimum: '1,20', safe: '1,30' }
+  if (name.includes('salto/plataforma')) return { minimum: '1,50', safe: '1,70' }
+  if (name.includes('escalada')) return { minimum: '15', safe: '13,5' }
+  if (name.includes('transporte de carga')) return { minimum: '90', safe: '82' }
+  if (name.includes('prova aquática')) return lowerIsBetter ? { minimum: '300', safe: '270' } : { minimum: '500', safe: '600' }
+
+  if (lowerIsBetter || unit.includes('segundo')) return { minimum: '60', safe: '54' }
+  if (unit.includes('metro')) return { minimum: '2,00', safe: '2,20' }
+  if (unit.includes('repet')) return { minimum: '10', safe: '12' }
+
+  return { minimum: '10', safe: '12' }
+}
+
+function minimumPlaceholderForTest(test) {
+  return `Ex.: ${getExampleValuesForTest(test).minimum}`
+}
+
+function safeGoalPlaceholderForTest(test) {
+  const minimum = parseNumber(test?.minimum_value)
+
+  if (minimum > 0) {
+    return `Sugestão: ${suggestSafeGoal(test, minimum)}`
+  }
+
+  return `Ex.: ${getExampleValuesForTest(test).safe}`
 }

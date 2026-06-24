@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 export default function Historico({ profile }) {
@@ -214,6 +215,10 @@ export default function Historico({ profile }) {
     return buildGeneralTimelineRows(allResultsWithTest, examTests)
   }, [allResultsWithTest, examTests])
 
+  const generalProgressTimeline = useMemo(() => {
+    return buildGeneralProgressTimeline(generalRows)
+  }, [generalRows])
+
   if (loading) {
     return (
       <div className="app-shell">
@@ -241,10 +246,10 @@ export default function Historico({ profile }) {
           </div>
 
           <nav className="app-nav">
-            <a href="/area-do-aluno">Dashboard</a>
-            <a href="/configurar-edital">Configurar Edital</a>
-            <a href="/calculadora-premium">Calculadora</a>
-            <a href="/perfil">Perfil</a>
+            <Link to="/area-do-aluno">Dashboard</Link>
+            <Link to="/configurar-edital">Configurar Edital</Link>
+            <Link to="/calculadora-premium">Calculadora</Link>
+            <Link to="/perfil">Perfil</Link>
             <button onClick={handleLogout}>Sair</button>
           </nav>
         </header>
@@ -256,9 +261,9 @@ export default function Historico({ profile }) {
             <p className="muted">
               Para acompanhar a evolução, primeiro configure as provas do seu concurso.
             </p>
-            <a className="btn btn-green" href="/configurar-edital">
+            <Link className="btn btn-green" to="/configurar-edital">
               Configurar edital
-            </a>
+            </Link>
           </div>
         </main>
       </div>
@@ -277,11 +282,11 @@ export default function Historico({ profile }) {
         </div>
 
         <nav className="app-nav">
-          <a href="/area-do-aluno">Dashboard</a>
-          <a href="/configurar-edital">Configurar Edital</a>
-          <a href="/calculadora-premium">Calculadora</a>
-          <a href="/historico">Histórico</a>
-          <a href="/perfil">Perfil</a>
+          <Link to="/area-do-aluno">Dashboard</Link>
+          <Link to="/configurar-edital">Configurar Edital</Link>
+          <Link to="/calculadora-premium">Calculadora</Link>
+          <Link to="/historico">Histórico</Link>
+          <Link to="/perfil">Perfil</Link>
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -318,7 +323,7 @@ export default function Historico({ profile }) {
           </div>
 
           <div className="info-card">
-            <span>Meta segura</span>
+            <span className="label-with-help">Meta segura <span className="help-icon" title="Meta segura é uma marca acima do mínimo do edital para criar margem de aprovação.">?</span></span>
             <strong>{testsAtSafeGoal}/{examTests.length}</strong>
           </div>
 
@@ -343,9 +348,9 @@ export default function Historico({ profile }) {
               </p>
             </div>
 
-            <a className="btn btn-green" href="/calculadora-premium">
+            <Link className="btn btn-green" to="/calculadora-premium">
               Registrar novo teste
-            </a>
+            </Link>
           </div>
 
           <div className="history-test-tabs advanced-tabs">
@@ -400,7 +405,7 @@ export default function Historico({ profile }) {
               </div>
 
               <div className="info-card">
-                <span>Meta segura</span>
+                <span className="label-with-help">Meta segura <span className="help-icon" title="Meta segura é uma marca acima do mínimo do edital para criar margem de aprovação.">?</span></span>
                 <strong>{testsAtSafeGoal}/{examTests.length}</strong>
               </div>
 
@@ -408,6 +413,30 @@ export default function Historico({ profile }) {
                 <span>Último teste</span>
                 <strong>{latestDate ? formatDate(latestDate) : '—'}</strong>
               </div>
+            </section>
+
+            <section className="premium-panel">
+              <div className="panel-head">
+                <div>
+                  <div className="kicker">Gráfico geral</div>
+                  <h2>Evolução até o mínimo</h2>
+                  <p className="muted">
+                    Média de desempenho dos testes por data. A linha vermelha mostra o nível mínimo que precisa ser atingido: 100%.
+                  </p>
+                </div>
+              </div>
+
+              {generalProgressTimeline.length >= 2 ? (
+                <GeneralProgressChart rows={generalProgressTimeline} />
+              ) : (
+                <div className="empty-state">
+                  <h3>Ainda não há dados suficientes para gráfico geral.</h3>
+                  <p>Registre pelo menos dois dias de teste para visualizar a evolução geral.</p>
+                  <Link className="btn btn-green" to="/calculadora-premium">
+                    Registrar novo teste
+                  </Link>
+                </div>
+              )}
             </section>
 
             <section className="premium-panel">
@@ -511,9 +540,9 @@ export default function Historico({ profile }) {
                   <p>
                     Registre pelo menos dois testes dessa prova para visualizar a evolução.
                   </p>
-                  <a className="btn btn-green" href="/calculadora-premium">
+                  <Link className="btn btn-green" to="/calculadora-premium">
                     Registrar novo resultado
-                  </a>
+                  </Link>
                 </div>
               )}
             </section>
@@ -544,9 +573,9 @@ export default function Historico({ profile }) {
             <div className="empty-state">
               <h3>Nenhuma prova configurada.</h3>
               <p>Volte para Configurar Edital e selecione as provas cobradas no concurso.</p>
-              <a className="btn btn-green" href="/configurar-edital">
+              <Link className="btn btn-green" to="/configurar-edital">
                 Configurar edital
-              </a>
+              </Link>
             </div>
           </section>
         )}
@@ -732,6 +761,56 @@ function ResultsTable({ rows, deletingId, onDelete }) {
   )
 }
 
+function GeneralProgressChart({ rows }) {
+  const width = 900
+  const height = 300
+  const padding = 54
+  const target = 100
+  const values = rows.map((row) => row.average).filter((value) => Number.isFinite(value))
+  const minValue = Math.min(70, target, ...values)
+  const maxValue = Math.max(120, target, ...values)
+  const range = Math.max(1, maxValue - minValue)
+
+  const points = rows.map((row, index) => {
+    const x = padding + (index * (width - padding * 2)) / Math.max(rows.length - 1, 1)
+    const y = height - padding - ((row.average - minValue) / range) * (height - padding * 2)
+    return { ...row, x, y }
+  })
+
+  const targetY = height - padding - ((target - minValue) / range) * (height - padding * 2)
+  const polylinePoints = points.map((point) => `${point.x},${point.y}`).join(' ')
+
+  return (
+    <div className="general-progress-chart-wrap">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Gráfico de evolução geral">
+        <line x1={padding} y1={targetY} x2={width - padding} y2={targetY} className="general-target-line" />
+        <polyline points={polylinePoints} className="general-progress-line" fill="none" />
+
+        {points.map((point) => (
+          <g key={point.date}>
+            <circle cx={point.x} cy={point.y} r="7" className="general-progress-point" />
+            <text x={point.x} y={point.y - 14} textAnchor="middle" className="chart-label">
+              {formatDecimal(point.average)}%
+            </text>
+            <text x={point.x} y={height - 14} textAnchor="middle" className="chart-date-label">
+              {formatShortDate(point.date)}
+            </text>
+          </g>
+        ))}
+
+        <text x={width - padding} y={targetY - 8} textAnchor="end" className="chart-ref-label">
+          Mínimo 100%
+        </text>
+      </svg>
+
+      <div className="chart-legend">
+        <span><i className="legend evolution"></i>Evolução média</span>
+        <span><i className="legend minimum"></i>Nível a atingir</span>
+      </div>
+    </div>
+  )
+}
+
 function SimpleLineChart({ stats }) {
   const width = 760
   const height = 280
@@ -799,6 +878,28 @@ function SimpleLineChart({ stats }) {
       </div>
     </div>
   )
+}
+
+function buildGeneralProgressTimeline(generalRows) {
+  return generalRows
+    .slice()
+    .reverse()
+    .map((row) => {
+      const percents = row.items
+        .map(({ result, test }) => calculatePercent(test, result.result_value))
+        .filter((value) => value !== null && Number.isFinite(Number(value)))
+
+      const average = percents.length
+        ? percents.reduce((sum, value) => sum + Number(value), 0) / percents.length
+        : null
+
+      return {
+        date: row.date,
+        average,
+        testsCount: row.items.length,
+      }
+    })
+    .filter((row) => row.average !== null)
 }
 
 function buildGeneralTimelineRows(items, examTests) {
@@ -1006,6 +1107,18 @@ function formatDecimal(value) {
   return String(Number(Number(value).toFixed(2))).replace('.', ',')
 }
 
+function formatShortDate(value) {
+  if (!value) return '—'
+  const text = String(value)
+
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    const [, month, day] = text.slice(0, 10).split('-')
+    return `${day}/${month}`
+  }
+
+  return text
+}
+
 function formatDate(value) {
   if (!value) return '—'
   const text = String(value)
@@ -1013,18 +1126,6 @@ function formatDate(value) {
   if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
     const [year, month, day] = text.slice(0, 10).split('-')
     return `${day}/${month}/${year}`
-  }
-
-  return text
-}
-
-function formatShortDate(value) {
-  if (!value) return ''
-  const text = String(value)
-
-  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
-    const [, month, day] = text.slice(0, 10).split('-')
-    return `${day}/${month}`
   }
 
   return text

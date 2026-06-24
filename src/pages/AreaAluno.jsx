@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
@@ -174,12 +175,12 @@ export default function AreaAluno({ profile }) {
         </div>
 
         <nav className="app-nav">
-          <a href="/area-do-aluno">Dashboard</a>
-          <a href="/configurar-edital">Configurar Edital</a>
-          <a href="/calculadora-premium">Calculadora</a>
-          <a href="/historico">Histórico</a>
-          <a href="/perfil">Perfil</a>
-          {isAdmin && <a href="/admin">Admin</a>}
+          <Link to="/area-do-aluno">Dashboard</Link>
+          <Link to="/configurar-edital">Configurar Edital</Link>
+          <Link to="/calculadora-premium">Calculadora</Link>
+          <Link to="/historico">Histórico</Link>
+          <Link to="/perfil">Perfil</Link>
+          {isAdmin && <Link to="/admin">Admin</Link>}
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -194,8 +195,8 @@ export default function AreaAluno({ profile }) {
             </p>
 
             <div className="student-hero-actions">
-              <a className="btn btn-green" href="/calculadora-premium">Atualizar diagnóstico</a>
-              <a className="btn btn-dark" href="/historico">Ver evolução</a>
+              <Link className="btn btn-green" to="/calculadora-premium">Atualizar diagnóstico</Link>
+              <Link className="btn btn-dark" to="/historico">Ver evolução</Link>
             </div>
           </div>
 
@@ -215,7 +216,7 @@ export default function AreaAluno({ profile }) {
             <p>
               O sistema precisa saber quais provas seu concurso cobra, os índices mínimos e a data prevista do TAF.
             </p>
-            <a className="btn btn-green" href="/configurar-edital">Configurar meu edital</a>
+            <Link className="btn btn-green" to="/configurar-edital">Configurar meu edital</Link>
           </section>
         ) : (
           <>
@@ -303,7 +304,7 @@ export default function AreaAluno({ profile }) {
                     <div>
                       <h3>{action.title}</h3>
                       <p>{action.text}</p>
-                      <a href={action.href}>{action.cta}</a>
+                      <Link to={action.href}>{action.cta}</Link>
                     </div>
                   </div>
                 ))}
@@ -319,7 +320,7 @@ export default function AreaAluno({ profile }) {
                     <p className="muted">Identifique o que está seguro, no limite ou exigindo correção imediata.</p>
                   </div>
 
-                  <a className="btn btn-dark" href="/calculadora-premium">Abrir calculadora</a>
+                  <Link className="btn btn-dark" to="/calculadora-premium">Abrir calculadora</Link>
                 </div>
 
                 {diagnostics.length ? (
@@ -348,7 +349,7 @@ export default function AreaAluno({ profile }) {
                   <div className="empty-state">
                     <h3>Nenhum resultado registrado.</h3>
                     <p>Abra a Calculadora Premium e registre seu primeiro teste.</p>
-                    <a className="btn btn-green" href="/calculadora-premium">Registrar primeiro teste</a>
+                    <Link className="btn btn-green" to="/calculadora-premium">Registrar primeiro teste</Link>
                   </div>
                 )}
               </div>
@@ -366,7 +367,7 @@ export default function AreaAluno({ profile }) {
                   <small>{recentEvolution.label}</small>
                 </div>
 
-                <a className="btn btn-green full-width-btn" href="/historico">Ver histórico completo</a>
+                <Link className="btn btn-green full-width-btn" to="/historico">Ver histórico completo</Link>
               </div>
             </section>
 
@@ -382,7 +383,7 @@ export default function AreaAluno({ profile }) {
               {HOTMART_COURSE_URL ? (
                 <a className="btn btn-dark" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Abrir Hotmart</a>
               ) : (
-                <a className="btn btn-dark" href="/perfil">Ver no perfil</a>
+                <Link className="btn btn-dark" to="/perfil">Ver no perfil</Link>
               )}
             </section>
           </>
