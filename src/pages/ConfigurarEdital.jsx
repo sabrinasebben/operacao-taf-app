@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
+
 const EDITAL_DRAFT_KEY_PREFIX = 'operacao_taf_edital_draft_'
 
 export default function ConfigurarEdital({ profile }) {
@@ -101,6 +103,7 @@ export default function ConfigurarEdital({ profile }) {
       })
 
       setSelectedTests(mapped)
+      restoreDraft()
     } else {
       restoreDraft()
     }
@@ -391,6 +394,11 @@ export default function ConfigurarEdital({ profile }) {
           <Link to="/configurar-edital">Configurar Edital</Link>
           <Link to="/calculadora-premium">Calculadora</Link>
           <Link to="/historico">Histórico</Link>
+          {HOTMART_COURSE_URL ? (
+            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
+          ) : (
+            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
+          )}
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -531,11 +539,11 @@ export default function ConfigurarEdital({ profile }) {
                               <label>
                                 <span className="label-with-help">
                                   Meta segura
-                                  <span
-                                    className="help-icon"
-                                    title="Meta segura é uma marca acima do mínimo do edital. Ela cria margem para variação no dia da prova, cansaço, nervosismo e pequenas diferenças de execução."
-                                  >
-                                    ?
+                                  <span className="help-tooltip" tabIndex="0">
+                                    <span className="help-icon">?</span>
+                                    <span className="help-bubble">
+                                      Meta segura é uma marca acima do índice mínimo do edital. Ela cria margem para o dia da prova, considerando cansaço, nervosismo, clima, execução e pequenas variações de desempenho.
+                                    </span>
                                   </span>
                                 </span>
                                 <input

@@ -180,6 +180,11 @@ export default function AreaAluno({ profile }) {
           <Link to="/calculadora-premium">Calculadora</Link>
           <Link to="/historico">Histórico</Link>
           <Link to="/perfil">Perfil</Link>
+          {HOTMART_COURSE_URL ? (
+            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
+          ) : (
+            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
+          )}
           {isAdmin && <Link to="/admin">Admin</Link>}
           <button onClick={handleLogout}>Sair</button>
         </nav>
@@ -252,27 +257,7 @@ export default function AreaAluno({ profile }) {
                 <small>Acima da meta segura.</small>
               </div>
             </section>
-
-            <section className="student-situation-grid">
-              <div className="premium-panel student-focus-panel">
-                <div className="panel-head">
-                  <div>
-                    <div className="kicker">Missão da semana</div>
-                    <h2>{trainingFocus.title}</h2>
-                    <p className="muted">{trainingFocus.text}</p>
-                  </div>
-                </div>
-
-                <div className="focus-list">
-                  {trainingFocus.items.map((item) => (
-                    <div className="focus-item" key={item.title}>
-                      <strong>{item.title}</strong>
-                      <small>{item.description}</small>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
+            <section className="student-situation-grid student-situation-grid-single">
               <div className="premium-panel student-readiness-panel">
                 <div className="kicker">Status do aluno</div>
                 <h2>{levelInfo.label}</h2>

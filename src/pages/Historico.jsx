@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
+
 export default function Historico({ profile }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -287,6 +289,11 @@ export default function Historico({ profile }) {
           <Link to="/calculadora-premium">Calculadora</Link>
           <Link to="/historico">Histórico</Link>
           <Link to="/perfil">Perfil</Link>
+          {HOTMART_COURSE_URL ? (
+            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
+          ) : (
+            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
+          )}
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -421,7 +428,7 @@ export default function Historico({ profile }) {
                   <div className="kicker">Gráfico geral</div>
                   <h2>Evolução até o mínimo</h2>
                   <p className="muted">
-                    Média de desempenho dos testes por data. A linha vermelha mostra o nível mínimo que precisa ser atingido: 100%.
+                    Média de desempenho dos testes por data. A linha vermelha mostra o mínimo obrigatório e a linha azul mostra a meta segura.
                   </p>
                 </div>
               </div>
@@ -766,9 +773,16 @@ function GeneralProgressChart({ rows }) {
   const height = 300
   const padding = 54
   const target = 100
-  const values = rows.map((row) => row.average).filter((value) => Number.isFinite(value))
-  const minValue = Math.min(70, target, ...values)
-  const maxValue = Math.max(120, target, ...values)
+
+  const averageValues = rows.map((row) => row.average).filter((value) => Number.isFinite(value))
+  const safeValues = rows.map((row) => row.safeAverage).filter((value) => Number.isFinite(value))
+  const safeTarget = safeValues.length
+    ? safeValues.reduce((sum, value) => sum + Number(value), 0) / safeValues.length
+    : null
+
+  const allValues = [...averageValues, ...(safeTarget ? [safeTarget] : []), target]
+  const minValue = Math.min(70, ...allValues)
+  const maxValue = Math.max(120, ...allValues)
   const range = Math.max(1, maxValue - minValue)
 
   const points = rows.map((row, index) => {
@@ -778,12 +792,21 @@ function GeneralProgressChart({ rows }) {
   })
 
   const targetY = height - padding - ((target - minValue) / range) * (height - padding * 2)
+  const safeY = safeTarget
+    ? height - padding - ((safeTarget - minValue) / range) * (height - padding * 2)
+    : null
+
   const polylinePoints = points.map((point) => `${point.x},${point.y}`).join(' ')
 
   return (
     <div className="general-progress-chart-wrap">
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Gráfico de evolução geral">
         <line x1={padding} y1={targetY} x2={width - padding} y2={targetY} className="general-target-line" />
+
+        {safeY !== null && (
+          <line x1={padding} y1={safeY} x2={width - padding} y2={safeY} className="general-safe-line" />
+        )}
+
         <polyline points={polylinePoints} className="general-progress-line" fill="none" />
 
         {points.map((point) => (
@@ -801,11 +824,18 @@ function GeneralProgressChart({ rows }) {
         <text x={width - padding} y={targetY - 8} textAnchor="end" className="chart-ref-label">
           Mínimo 100%
         </text>
+
+        {safeY !== null && (
+          <text x={width - padding} y={safeY - 8} textAnchor="end" className="chart-ref-label safe">
+            Meta segura {formatDecimal(safeTarget)}%
+          </text>
+        )}
       </svg>
 
       <div className="chart-legend">
         <span><i className="legend evolution"></i>Evolução média</span>
-        <span><i className="legend minimum"></i>Nível a atingir</span>
+        <span><i className="legend minimum"></i>Mínimo 100%</span>
+        <span><i className="legend safe"></i>Meta segura</span>
       </div>
     </div>
   )
@@ -889,13 +919,22 @@ function buildGeneralProgressTimeline(generalRows) {
         .map(({ result, test }) => calculatePercent(test, result.result_value))
         .filter((value) => value !== null && Number.isFinite(Number(value)))
 
+      const safePercents = row.items
+        .map(({ test }) => calculatePercent(test, test.safe_goal_value))
+        .filter((value) => value !== null && Number.isFinite(Number(value)))
+
       const average = percents.length
         ? percents.reduce((sum, value) => sum + Number(value), 0) / percents.length
+        : null
+
+      const safeAverage = safePercents.length
+        ? safePercents.reduce((sum, value) => sum + Number(value), 0) / safePercents.length
         : null
 
       return {
         date: row.date,
         average,
+        safeAverage,
         testsCount: row.items.length,
       }
     })
