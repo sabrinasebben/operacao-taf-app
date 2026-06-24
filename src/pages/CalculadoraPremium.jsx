@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
+const CALCULADORA_DRAFT_KEY_PREFIX = 'operacao_taf_calculadora_draft_'
+const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
+
 export default function CalculadoraPremium({ profile }) {
+  const draftKey = `${CALCULADORA_DRAFT_KEY_PREFIX}${profile.user_id}`
+
   const [loading, setLoading] = useState(true)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingResults, setSavingResults] = useState(false)
@@ -23,6 +29,23 @@ export default function CalculadoraPremium({ profile }) {
     loadPremiumData()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
+
+  useEffect(() => {
+    if (loading) return
+
+    const draft = {
+      birthDate,
+      weight,
+      height,
+      sex,
+      resultValues,
+      resultDate,
+      resultNotes,
+      updatedAt: new Date().toISOString(),
+    }
+
+    localStorage.setItem(draftKey, JSON.stringify(draft))
+  }, [loading, birthDate, weight, height, sex, resultValues, resultDate, resultNotes, draftKey])
 
   async function loadPremiumData() {
     setLoading(true)
@@ -102,8 +125,49 @@ export default function CalculadoraPremium({ profile }) {
         : ''
     })
 
-    setResultValues(mappedResults)
+    const draft = readCalculatorDraft()
+
+    if (draft) {
+      setBirthDate(draft.birthDate ?? profile?.birth_date ?? '')
+      setWeight(draft.weight ?? profile?.weight ?? '')
+      setHeight(draft.height ?? profile?.height ?? '')
+      setSex(draft.sex ?? profile?.sex ?? 'Masculino')
+      setResultValues(draft.resultValues || mappedResults)
+      setResultDate(draft.resultDate || today())
+      setResultNotes(draft.resultNotes || '')
+    } else {
+      setResultValues(mappedResults)
+    }
+
     setLoading(false)
+  }
+
+  function readCalculatorDraft() {
+    try {
+      const raw = localStorage.getItem(draftKey)
+      if (!raw) return null
+
+      const draft = JSON.parse(raw)
+      if (!draft || typeof draft !== 'object') return null
+
+      return draft
+    } catch {
+      localStorage.removeItem(draftKey)
+      return null
+    }
+  }
+
+  function handleClearDraft() {
+    localStorage.removeItem(draftKey)
+    setBirthDate(profile?.birth_date || '')
+    setWeight(profile?.weight || '')
+    setHeight(profile?.height || '')
+    setSex(profile?.sex || 'Masculino')
+    setResultValues({})
+    setResultDate(today())
+    setResultNotes('')
+    setMessage('Rascunho limpo.')
+    loadPremiumData()
   }
 
   async function handleLogout() {
@@ -187,6 +251,7 @@ export default function CalculadoraPremium({ profile }) {
     }
 
     setMessage('Resultados salvos. Diagnóstico atualizado.')
+    localStorage.removeItem(draftKey)
     setResultNotes('')
     await loadPremiumData()
     setSavingResults(false)
@@ -263,8 +328,8 @@ export default function CalculadoraPremium({ profile }) {
           </div>
 
           <nav className="app-nav">
-            <a href="/area-do-aluno">Dashboard</a>
-            <a href="/configurar-edital">Configurar Edital</a>
+            <Link to="/area-do-aluno">Dashboard</Link>
+            <Link to="/configurar-edital">Configurar Edital</Link>
             <button onClick={handleLogout}>Sair</button>
           </nav>
         </header>
@@ -276,9 +341,9 @@ export default function CalculadoraPremium({ profile }) {
             <p className="muted">
               Para usar a Calculadora Premium, selecione as provas do seu concurso e informe os índices mínimos.
             </p>
-            <a className="btn btn-green" href="/configurar-edital">
+            <Link className="btn btn-green" to="/configurar-edital">
               Configurar meu edital
-            </a>
+            </Link>
           </div>
         </main>
       </div>
@@ -297,10 +362,15 @@ export default function CalculadoraPremium({ profile }) {
         </div>
 
         <nav className="app-nav">
-          <a href="/area-do-aluno">Dashboard</a>
-          <a href="/configurar-edital">Configurar Edital</a>
-          <a href="/calculadora-premium">Calculadora</a>
-          <a href="/historico">Histórico</a>
+          <Link to="/area-do-aluno">Dashboard</Link>
+          <Link to="/configurar-edital">Configurar Edital</Link>
+          <Link to="/calculadora-premium">Calculadora</Link>
+          <Link to="/historico">Histórico</Link>
+          {HOTMART_COURSE_URL ? (
+            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
+          ) : (
+            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
+          )}
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -524,9 +594,13 @@ export default function CalculadoraPremium({ profile }) {
             </div>
 
             <div className="save-footer">
-              <a className="btn btn-dark" href="/area-do-aluno">
+              <Link className="btn btn-dark" to="/area-do-aluno">
                 Voltar
-              </a>
+              </Link>
+
+              <button className="btn btn-dark" type="button" onClick={handleClearDraft}>
+                Limpar rascunho
+              </button>
 
               <button className="btn btn-green" type="submit" disabled={savingResults}>
                 {savingResults ? 'Salvando resultados...' : 'Salvar resultados e atualizar diagnóstico'}

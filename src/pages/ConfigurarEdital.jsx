@@ -359,6 +359,18 @@ export default function ConfigurarEdital({ profile }) {
     navigate('/area-do-aluno')
   }
 
+  function handleClearDraft() {
+    localStorage.removeItem(draftKey)
+    setExamName(profile?.target_exam || '')
+    setInstitution('')
+    setTafDate('')
+    setSexReference(profile?.sex || 'Masculino')
+    setNotes('')
+    setSelectedTests({})
+    setMessage('Rascunho limpo.')
+    loadInitialData()
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     window.location.href = '/login'
