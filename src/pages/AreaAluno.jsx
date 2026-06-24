@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
+const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
+
 export default function AreaAluno({ profile }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -188,7 +190,7 @@ export default function AreaAluno({ profile }) {
             <div className="kicker">Painel de comando</div>
             <h1>{levelInfo.commercialLabel}</h1>
             <p>
-              {profile.name ? `${profile.name}, ` : ''}{levelInfo.description}
+              {getFirstName(profile.name) ? `${getFirstName(profile.name)}, ` : ''}{levelInfo.description}
             </p>
 
             <div className="student-hero-actions">
@@ -239,8 +241,8 @@ export default function AreaAluno({ profile }) {
 
               <div className="student-risk-card">
                 <span>Edital ativo</span>
-                <strong>{activeExam.exam_name || summary?.exam_name || '—'}</strong>
-                <small>{activeExam.institution || summary?.institution || 'Instituição não informada'}</small>
+                <strong>{formatDisplayText(activeExam.exam_name || summary?.exam_name || '—')}</strong>
+                <small>{formatDisplayText(activeExam.institution || summary?.institution || 'Instituição não informada')}</small>
               </div>
 
               <div className="student-risk-card">
@@ -254,7 +256,7 @@ export default function AreaAluno({ profile }) {
               <div className="premium-panel student-focus-panel">
                 <div className="panel-head">
                   <div>
-                    <div className="kicker">Prioridade de treino</div>
+                    <div className="kicker">Missão da semana</div>
                     <h2>{trainingFocus.title}</h2>
                     <p className="muted">{trainingFocus.text}</p>
                   </div>
@@ -289,7 +291,7 @@ export default function AreaAluno({ profile }) {
                   <div className="kicker">Próximos passos</div>
                   <h2>O que fazer agora</h2>
                   <p className="muted">
-                    Ações recomendadas com base no seu edital, nos seus resultados e no prazo até o TAF.
+                    Ordem prática de execução para a próxima semana de preparação.
                   </p>
                 </div>
               </div>
@@ -313,8 +315,8 @@ export default function AreaAluno({ profile }) {
                 <div className="panel-head">
                   <div>
                     <div className="kicker">Mapa do edital</div>
-                    <h2>Situação das provas</h2>
-                    <p className="muted">Veja rapidamente o que está seguro, no limite ou em risco.</p>
+                    <h2>Leitura das provas</h2>
+                    <p className="muted">Identifique o que está seguro, no limite ou exigindo correção imediata.</p>
                   </div>
 
                   <a className="btn btn-dark" href="/calculadora-premium">Abrir calculadora</a>
@@ -325,7 +327,7 @@ export default function AreaAluno({ profile }) {
                     {diagnostics.map((test) => (
                       <div className={`student-test-row status-border-${test.taf_status || 'sem_resultado'}`} key={test.exam_test_id}>
                         <div>
-                          <strong>{test.test_name}</strong>
+                          <strong>{formatDisplayText(test.test_name)}</strong>
                           <small>
                             {test.latest_result_value
                               ? formatValueByUnit(test.latest_result_value, test.unit, test.calculation_type)
@@ -353,9 +355,9 @@ export default function AreaAluno({ profile }) {
 
               <div className="premium-panel">
                 <div className="kicker">Últimos 30 dias</div>
-                <h2>Evolução recente</h2>
+                <h2>Ritmo de controle</h2>
                 <p className="muted">
-                  Resumo dos registros recentes salvos na calculadora.
+                  Frequência de registros recentes na calculadora.
                 </p>
 
                 <div className="recent-evolution-box">
@@ -371,13 +373,17 @@ export default function AreaAluno({ profile }) {
             <section className="premium-panel hotmart-reminder-panel">
               <div>
                 <div className="kicker">Aulas e materiais</div>
-                <h2>Curso completo na Hotmart</h2>
+                <h2>Continue pela Hotmart</h2>
                 <p className="muted">
-                  Os vídeos, PDFs e planilhas ficam na Hotmart. Esta Área Premium é seu painel de diagnóstico, evolução e acompanhamento.
+                  Use a Hotmart para assistir às aulas, acessar PDFs e materiais do curso. Use esta Área Premium para diagnóstico, evolução e controle do TAF.
                 </p>
               </div>
 
-              <a className="btn btn-dark" href="/perfil">Acessar pelo perfil</a>
+              {HOTMART_COURSE_URL ? (
+                <a className="btn btn-dark" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Abrir Hotmart</a>
+              ) : (
+                <a className="btn btn-dark" href="/perfil">Ver no perfil</a>
+              )}
             </section>
           </>
         )}
@@ -451,8 +457,8 @@ function buildTrainingFocus({ level, daysToTaf, criticalTests, diagnostics }) {
 
   if (level === 'blindagem') {
     return {
-      title: 'Manter desempenho',
-      text: 'Você está acima da meta segura. Agora o foco é chegar inteiro, consistente e confiante.',
+      title: 'Manter zona segura',
+      text: 'Você já está em zona segura. A missão é manter desempenho, simular o edital e reduzir risco de lesão.',
       items: [
         { title: 'Simulado específico', description: 'Treine conforme a ordem e regras do edital.' },
         { title: 'Prevenção de lesões', description: 'Controle volume, sono, dor e recuperação.' },
@@ -474,8 +480,8 @@ function buildTrainingFocus({ level, daysToTaf, criticalTests, diagnostics }) {
   }
 
   return {
-    title: 'Criar margem',
-    text: 'Você já avançou, mas ainda precisa transformar mínimo em segurança.',
+    title: 'Criar margem segura',
+    text: 'Você já avançou. Agora precisa transformar mínimo em margem segura e repetível.',
     items: [
       { title: 'Meta segura', description: 'Busque resultado acima do mínimo do edital.' },
       { title: 'Consistência', description: 'Treine com regularidade e registre evolução.' },
@@ -605,7 +611,7 @@ function buildRecentEvolution(recentResults) {
   if (!recentResults.length) {
     return {
       total: 0,
-      label: 'Nenhum resultado recente. Registre seu primeiro teste.',
+      label: 'Nenhum registro recente. Atualize a calculadora para manter o controle da evolução.',
     }
   }
 
@@ -619,8 +625,8 @@ function buildRecentEvolution(recentResults) {
   return {
     total: last30.length,
     label: last30.length
-      ? 'Resultados registrados nos últimos 30 dias.'
-      : 'Há resultados salvos, mas nenhum nos últimos 30 dias.',
+      ? 'Controle ativo nos últimos 30 dias.'
+      : 'Há resultados salvos, mas nenhum registro recente nos últimos 30 dias.',
   }
 }
 
@@ -661,26 +667,26 @@ function getLevelInfo(level) {
     base: {
       label: 'Base',
       commercialLabel: 'Risco de reprovação',
-      description: 'sua preparação está em zona crítica. O foco agora é construir base, corrigir técnica e evitar treino aleatório.',
-      long: 'Existe pelo menos uma prova em situação crítica. A prioridade é construir fundamento físico e técnico antes de aumentar intensidade.',
+      description: 'o diagnóstico aponta uma zona crítica. A missão agora é construir base, corrigir execução e recuperar desempenho com segurança.',
+      long: 'Há prova em situação crítica ou desempenho insuficiente para o mínimo. Priorize regularidade, técnica e evolução progressiva.',
     },
     arranque: {
       label: 'Arranque',
       commercialLabel: 'Em recuperação',
-      description: 'você já tem ponto de partida, mas ainda está abaixo do mínimo. A prioridade é evoluir com regularidade.',
-      long: 'Você ainda não está seguro para o TAF. O foco é progressão controlada, técnica e constância.',
+      description: 'você já tem ponto de partida, mas ainda precisa sair da zona de risco. O foco é consistência e ganho controlado.',
+      long: 'Você ainda não está seguro para o TAF. O objetivo é transformar treino em resultado medido, sem pular etapas.',
     },
     progressao: {
       label: 'Progressão',
       commercialLabel: 'Perto da aprovação',
-      description: 'você está se aproximando do índice, mas ainda precisa criar margem para não depender de um dia perfeito.',
-      long: 'Você está próximo do mínimo. Agora precisa transformar proximidade em segurança.',
+      description: 'você está se aproximando do índice. Agora precisa criar margem para não depender de um dia perfeito.',
+      long: 'Você está próximo do mínimo. A meta é sair do limite e construir segurança real para o dia da prova.',
     },
     performance: {
       label: 'Performance',
       commercialLabel: 'Apto com atenção',
-      description: 'você já atingiu o mínimo em provas importantes. Agora o foco é consistência e margem.',
-      long: 'O mínimo foi atingido, mas ainda é importante consolidar desempenho e evitar queda no dia da prova.',
+      description: 'você já mostra desempenho competitivo. Agora o foco é consolidar margem, simular o edital e manter regularidade.',
+      long: 'O mínimo foi atingido em pontos importantes. Continue criando margem e evitando queda de desempenho.',
     },
     blindagem: {
       label: 'Blindagem',
@@ -697,6 +703,35 @@ function getLevelInfo(level) {
   }
 
   return levels[level] || levels.sem_resultado
+}
+
+function getFirstName(name) {
+  return String(name || '').trim().split(/\s+/)[0] || ''
+}
+
+function formatDisplayText(value) {
+  const text = String(value || '').trim()
+
+  if (!text || text === '—') return text || '—'
+
+  const acronyms = new Set([
+    'TAF', 'BM', 'PM', 'PRF', 'PF', 'PC', 'CBM', 'GCM', 'GM',
+    'CFO', 'CTSP', 'ESA', 'EEAR', 'ESPCEX', 'BPM'
+  ])
+
+  return text
+    .toLowerCase()
+    .split(' ')
+    .map((word) => {
+      const clean = word.replace(/[^a-zA-ZÀ-ÿ0-9]/g, '').toUpperCase()
+
+      if (acronyms.has(clean)) return clean
+
+      if (word.length <= 2 && !/^\d+$/.test(word)) return word
+
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    })
+    .join(' ')
 }
 
 function parseLocalDate(dateValue) {

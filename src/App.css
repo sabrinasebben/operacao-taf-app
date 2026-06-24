@@ -2891,3 +2891,139 @@ input:focus {
     justify-items: start;
   }
 }
+
+/* ================================
+   FASE 10.1 — AJUSTES FINAIS DO DASHBOARD DO ALUNO
+================================ */
+
+.student-command-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.student-command-hero::after {
+  content: "";
+  position: absolute;
+  right: -120px;
+  top: -160px;
+  width: 360px;
+  height: 360px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(126,211,33,.13), transparent 62%);
+  pointer-events: none;
+}
+
+.student-hero-main,
+.student-countdown-card {
+  position: relative;
+  z-index: 1;
+}
+
+.student-hero-main h1 {
+  max-width: 850px;
+}
+
+.student-countdown-card {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+}
+
+.student-countdown-card strong {
+  text-transform: uppercase;
+}
+
+.student-progress-card,
+.student-risk-card,
+.focus-item,
+.student-action-card,
+.student-test-row,
+.recent-evolution-box {
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+.student-progress-card:hover,
+.student-risk-card:hover,
+.focus-item:hover,
+.student-action-card:hover,
+.student-test-row:hover {
+  transform: translateY(-2px);
+  border-color: rgba(126,211,33,.28);
+  background: rgba(255,255,255,.055);
+}
+
+.student-risk-card strong {
+  text-transform: uppercase;
+}
+
+.student-risk-card:not(.risk-alto):not(.risk-medio):not(.risk-baixo) strong {
+  color: white;
+}
+
+.student-progress-card {
+  border-color: rgba(126,211,33,.22);
+}
+
+.student-progress-card .student-card-head strong {
+  color: white;
+}
+
+.student-readiness-panel {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.11), transparent 38%),
+    linear-gradient(145deg, rgba(23,34,44,.96), rgba(5,10,14,.88));
+}
+
+.readiness-tags span {
+  box-shadow: inset 0 0 0 1px rgba(126,211,33,.04);
+}
+
+.student-action-card.priority-1 {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.10), transparent 42%),
+    rgba(255,255,255,.045);
+}
+
+.student-action-card .action-number {
+  box-shadow: 0 12px 28px rgba(126,211,33,.18);
+}
+
+.student-test-row.status-border-atingiu_meta_segura {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(126,211,33,.10), transparent 40%),
+    rgba(255,255,255,.04);
+}
+
+.student-test-row.status-border-critico,
+.student-test-row.status-border-abaixo_do_minimo {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255,59,59,.07), transparent 40%),
+    rgba(255,255,255,.04);
+}
+
+.recent-evolution-box {
+  border-color: rgba(126,211,33,.22);
+}
+
+.hotmart-reminder-panel {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.10), transparent 40%),
+    linear-gradient(145deg, rgba(23,34,44,.96), rgba(5,10,14,.88));
+}
+
+.hotmart-reminder-panel h2 {
+  margin-bottom: 8px;
+}
+
+.hotmart-reminder-panel .btn {
+  min-width: 180px;
+}
+
+@media (max-width: 720px) {
+  .student-hero-actions .btn,
+  .hotmart-reminder-panel .btn {
+    width: 100%;
+  }
+
+  .student-command-hero::after {
+    display: none;
+  }
+}
