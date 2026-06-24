@@ -2201,65 +2201,6 @@ input:focus {
     padding: 24px;
   }
 }
-OPERAÇÃO TAF — FASE 8.2
-ADMIN MASTER SABRINA + GERENCIAR ADMINISTRADORES
-
-Objetivo:
-Substituir a lógica antiga de admin@operacaotaf.com por:
-
-Admin master:
-sabrinasebben@sevbenoficial.com
-
-Dentro do painel /admin será possível:
-- adicionar outros e-mails administradores;
-- remover/reativar e-mails administradores;
-- liberar/bloquear alunos;
-- marcar perfil como admin/aluno.
-
-IMPORTANTE SOBRE SENHA:
-A senha 123456 deve ser usada apenas como temporária para criar/testar o usuário no Supabase Auth.
-Depois troque por uma senha forte.
-A senha não fica no código.
-
-Arquivos:
-
-1. src/pages/Admin.jsx
-   Substituir:
-   C:\Users\diego\Desktop\operacao-taf-app\src\pages\Admin.jsx
-
-2. src/pages/AreaAluno.jsx
-   Substituir:
-   C:\Users\diego\Desktop\operacao-taf-app\src\pages\AreaAluno.jsx
-
-3. src/App.jsx
-   Substituir:
-   C:\Users\diego\Desktop\operacao-taf-app\src\App.jsx
-
-4. src/App.css_APPEND_FASE8_2.txt
-   Copiar tudo e colar no FINAL de:
-   C:\Users\diego\Desktop\operacao-taf-app\src\App.css
-
-5. supabase_fase8_2_admin_master_sabrina.sql
-   Executar no Supabase SQL Editor.
-
-ANTES DE TESTAR:
-No Supabase Authentication > Users:
-crie o usuário:
-sabrinasebben@sevbenoficial.com
-senha temporária: 123456
-
-Depois execute o SQL da Fase 8.2.
-
-Teste:
-npm run dev
-http://localhost:5173/login
-
-Entrar com:
-sabrinasebben@sevbenoficial.com
-123456
-
-Depois abrir:
-http://localhost:5173/admin
 
 /* ================================
    FASE 8.3 — ADMIN PROFISSIONAL
