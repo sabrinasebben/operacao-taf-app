@@ -84,7 +84,7 @@ export default function AreaAluno({ profile }) {
       .eq('student_exam_id', examData.id)
       .order('result_date', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(6)
+      .limit(12)
 
     setRecentResults(resultsData || [])
     setLoading(false)
@@ -96,10 +96,10 @@ export default function AreaAluno({ profile }) {
   }
 
   const level = summary?.taf_level || 'sem_resultado'
+  const levelInfo = getLevelInfo(level)
   const risk = getRisk(level)
   const daysToTaf = getDaysToDate(activeExam?.taf_date || summary?.taf_date)
   const dayInfo = formatDaysToTaf(daysToTaf)
-  const levelInfo = getLevelInfo(level)
 
   const criticalTests = useMemo(() => {
     return diagnostics.filter((test) =>
@@ -111,6 +111,25 @@ export default function AreaAluno({ profile }) {
     return diagnostics.filter((test) => test.taf_status === 'atingiu_meta_segura')
   }, [diagnostics])
 
+  const minimumTests = useMemo(() => {
+    return diagnostics.filter((test) =>
+      ['atingiu_minimo', 'atingiu_meta_segura'].includes(test.taf_status)
+    )
+  }, [diagnostics])
+
+  const progress = useMemo(() => {
+    return calculateGeneralProgress(diagnostics)
+  }, [diagnostics])
+
+  const trainingFocus = useMemo(() => {
+    return buildTrainingFocus({
+      level,
+      daysToTaf,
+      criticalTests,
+      diagnostics,
+    })
+  }, [level, daysToTaf, criticalTests, diagnostics])
+
   const nextActions = useMemo(() => {
     return buildNextActions({
       hasExam: Boolean(activeExam),
@@ -121,7 +140,11 @@ export default function AreaAluno({ profile }) {
     })
   }, [activeExam, diagnostics, level, criticalTests, daysToTaf])
 
-  const modules = buildCourseModules(level, activeExam, diagnostics)
+  const recentEvolution = useMemo(() => {
+    return buildRecentEvolution(recentResults)
+  }, [recentResults])
+
+  const isAdmin = profile?.role === 'admin' || profile?.email === 'sabrinasebben@sevbenoficial.com'
 
   if (loading) {
     return (
@@ -153,29 +176,31 @@ export default function AreaAluno({ profile }) {
           <a href="/configurar-edital">Configurar Edital</a>
           <a href="/calculadora-premium">Calculadora</a>
           <a href="/historico">Histórico</a>
+          <a href="/perfil">Perfil</a>
+          {isAdmin && <a href="/admin">Admin</a>}
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
 
       <main className="dashboard">
-        <section className={`command-hero level-${level}`}>
-          <div className="command-hero-content">
+        <section className={`student-command-hero level-${level}`}>
+          <div className="student-hero-main">
             <div className="kicker">Painel de comando</div>
-            <h1>Bem-vindo, {profile.name || 'Aluno Operação TAF'}.</h1>
+            <h1>{levelInfo.commercialLabel}</h1>
             <p>
-              Este é seu painel principal para acompanhar edital, diagnóstico, evolução e próximos passos dentro do Método M60.
+              {profile.name ? `${profile.name}, ` : ''}{levelInfo.description}
             </p>
 
-            <div className="command-actions">
+            <div className="student-hero-actions">
               <a className="btn btn-green" href="/calculadora-premium">Atualizar diagnóstico</a>
               <a className="btn btn-dark" href="/historico">Ver evolução</a>
             </div>
           </div>
 
-          <div className="command-status">
-            <span>Nível atual</span>
-            <strong>{levelInfo.label}</strong>
-            <small>{levelInfo.short}</small>
+          <div className="student-countdown-card">
+            <span>TAF</span>
+            <strong>{dayInfo.value}</strong>
+            <small>{dayInfo.label}</small>
           </div>
         </section>
 
@@ -192,41 +217,69 @@ export default function AreaAluno({ profile }) {
           </section>
         ) : (
           <>
-            <section className="dashboard-command-grid">
-              <div className="command-card">
+            <section className="student-top-grid">
+              <div className="student-progress-card">
+                <div className="student-card-head">
+                  <span>Preparação geral</span>
+                  <strong>{progress.value}%</strong>
+                </div>
+
+                <div className="progress-bar-shell">
+                  <div className="progress-bar-fill" style={{ width: `${progress.value}%` }} />
+                </div>
+
+                <p>{progress.label}</p>
+              </div>
+
+              <div className={`student-risk-card risk-${risk.key}`}>
+                <span>Risco atual</span>
+                <strong>{risk.label}</strong>
+                <small>{risk.description}</small>
+              </div>
+
+              <div className="student-risk-card">
                 <span>Edital ativo</span>
                 <strong>{activeExam.exam_name || summary?.exam_name || '—'}</strong>
                 <small>{activeExam.institution || summary?.institution || 'Instituição não informada'}</small>
               </div>
 
-              <div className={`command-card risk-${risk.key}`}>
-                <span>Risco no TAF</span>
-                <strong>{risk.label}</strong>
-                <small>{risk.description}</small>
+              <div className="student-risk-card">
+                <span>Provas seguras</span>
+                <strong>{safeTests.length}/{diagnostics.length}</strong>
+                <small>Acima da meta segura.</small>
+              </div>
+            </section>
+
+            <section className="student-situation-grid">
+              <div className="premium-panel student-focus-panel">
+                <div className="panel-head">
+                  <div>
+                    <div className="kicker">Prioridade de treino</div>
+                    <h2>{trainingFocus.title}</h2>
+                    <p className="muted">{trainingFocus.text}</p>
+                  </div>
+                </div>
+
+                <div className="focus-list">
+                  {trainingFocus.items.map((item) => (
+                    <div className="focus-item" key={item.title}>
+                      <strong>{item.title}</strong>
+                      <small>{item.description}</small>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="command-card">
-                <span>Dias até o TAF</span>
-                <strong>{dayInfo.value}</strong>
-                <small>{dayInfo.label}</small>
-              </div>
+              <div className="premium-panel student-readiness-panel">
+                <div className="kicker">Status do aluno</div>
+                <h2>{levelInfo.label}</h2>
+                <p>{levelInfo.long}</p>
 
-              <div className="command-card">
-                <span>Meta segura</span>
-                <strong>{safeTests.length}/{diagnostics.length || summary?.total_tests || 0}</strong>
-                <small>Provas acima da margem de segurança.</small>
-              </div>
-
-              <div className="command-card">
-                <span>Ponto de atenção</span>
-                <strong>{getAttentionTest(summary, diagnostics)}</strong>
-                <small>{criticalTests.length ? 'Prioridade imediata.' : 'Menor margem atual.'}</small>
-              </div>
-
-              <div className="command-card">
-                <span>Últimos registros</span>
-                <strong>{recentResults.length}</strong>
-                <small>Resultados recentes salvos no histórico.</small>
+                <div className="readiness-tags">
+                  <span>{minimumTests.length}/{diagnostics.length} no mínimo</span>
+                  <span>{criticalTests.length} ponto(s) críticos</span>
+                  <span>{recentResults.length} registro(s) recentes</span>
+                </div>
               </div>
             </section>
 
@@ -236,14 +289,14 @@ export default function AreaAluno({ profile }) {
                   <div className="kicker">Próximos passos</div>
                   <h2>O que fazer agora</h2>
                   <p className="muted">
-                    Ações recomendadas com base no seu edital e no diagnóstico atual.
+                    Ações recomendadas com base no seu edital, nos seus resultados e no prazo até o TAF.
                   </p>
                 </div>
               </div>
 
-              <div className="next-action-grid">
+              <div className="student-action-grid">
                 {nextActions.map((action, index) => (
-                  <div className={`next-action-card priority-${index + 1}`} key={action.title}>
+                  <div className={`student-action-card priority-${index + 1}`} key={action.title}>
                     <div className="action-number">{index + 1}</div>
                     <div>
                       <h3>{action.title}</h3>
@@ -255,64 +308,76 @@ export default function AreaAluno({ profile }) {
               </div>
             </section>
 
-            <section className="premium-panel">
-              <div className="panel-head">
-                <div>
-                  <div className="kicker">Diagnóstico rápido</div>
-                  <h2>Situação das provas</h2>
-                  <p className="muted">
-                    Visão objetiva para saber onde acelerar, manter ou corrigir.
-                  </p>
+            <section className="student-analysis-grid">
+              <div className="premium-panel">
+                <div className="panel-head">
+                  <div>
+                    <div className="kicker">Mapa do edital</div>
+                    <h2>Situação das provas</h2>
+                    <p className="muted">Veja rapidamente o que está seguro, no limite ou em risco.</p>
+                  </div>
+
+                  <a className="btn btn-dark" href="/calculadora-premium">Abrir calculadora</a>
                 </div>
 
-                <a className="btn btn-dark" href="/calculadora-premium">Abrir calculadora</a>
+                {diagnostics.length ? (
+                  <div className="student-tests-list">
+                    {diagnostics.map((test) => (
+                      <div className={`student-test-row status-border-${test.taf_status || 'sem_resultado'}`} key={test.exam_test_id}>
+                        <div>
+                          <strong>{test.test_name}</strong>
+                          <small>
+                            {test.latest_result_value
+                              ? formatValueByUnit(test.latest_result_value, test.unit, test.calculation_type)
+                              : 'Sem resultado'}
+                          </small>
+                        </div>
+
+                        <div className="student-test-percent">
+                          <strong>{test.percent_minimum ? `${formatDecimal(test.percent_minimum)}%` : '—'}</strong>
+                          <span className={`taf-status-pill status-${test.taf_status || 'sem_resultado'}`}>
+                            {formatStatus(test.taf_status)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state">
+                    <h3>Nenhum resultado registrado.</h3>
+                    <p>Abra a Calculadora Premium e registre seu primeiro teste.</p>
+                    <a className="btn btn-green" href="/calculadora-premium">Registrar primeiro teste</a>
+                  </div>
+                )}
               </div>
 
-              {diagnostics.length ? (
-                <div className="dashboard-tests-grid">
-                  {diagnostics.map((test) => (
-                    <div className={`dashboard-test-card status-border-${test.taf_status || 'sem_resultado'}`} key={test.exam_test_id}>
-                      <span>{test.test_name}</span>
-                      <strong>{test.percent_minimum ? `${formatDecimal(test.percent_minimum)}%` : '—'}</strong>
-                      <small>
-                        {test.latest_result_value
-                          ? `${formatValueByUnit(test.latest_result_value, test.unit, test.calculation_type)}`
-                          : 'Sem resultado'}
-                      </small>
-                      <em>{formatStatus(test.taf_status)}</em>
-                    </div>
-                  ))}
+              <div className="premium-panel">
+                <div className="kicker">Últimos 30 dias</div>
+                <h2>Evolução recente</h2>
+                <p className="muted">
+                  Resumo dos registros recentes salvos na calculadora.
+                </p>
+
+                <div className="recent-evolution-box">
+                  <strong>{recentEvolution.total}</strong>
+                  <span>resultado(s) registrados</span>
+                  <small>{recentEvolution.label}</small>
                 </div>
-              ) : (
-                <div className="empty-state">
-                  <h3>Nenhum resultado registrado.</h3>
-                  <p>Abra a Calculadora Premium e registre seu primeiro teste.</p>
-                  <a className="btn btn-green" href="/calculadora-premium">Registrar primeiro teste</a>
-                </div>
-              )}
+
+                <a className="btn btn-green full-width-btn" href="/historico">Ver histórico completo</a>
+              </div>
             </section>
 
-            <section className="premium-panel">
-              <div className="panel-head">
-                <div>
-                  <div className="kicker">Método M60</div>
-                  <h2>Módulos recomendados</h2>
-                  <p className="muted">
-                    Organização visual para a futura área de aulas, materiais e treinos.
-                  </p>
-                </div>
+            <section className="premium-panel hotmart-reminder-panel">
+              <div>
+                <div className="kicker">Aulas e materiais</div>
+                <h2>Curso completo na Hotmart</h2>
+                <p className="muted">
+                  Os vídeos, PDFs e planilhas ficam na Hotmart. Esta Área Premium é seu painel de diagnóstico, evolução e acompanhamento.
+                </p>
               </div>
 
-              <div className="module-grid">
-                {modules.map((module) => (
-                  <div className={`module-card ${module.highlight ? 'highlight' : ''}`} key={module.title}>
-                    <span>{module.tag}</span>
-                    <h3>{module.title}</h3>
-                    <p>{module.text}</p>
-                    <small>{module.status}</small>
-                  </div>
-                ))}
-              </div>
+              <a className="btn btn-dark" href="/perfil">Acessar pelo perfil</a>
             </section>
           </>
         )}
@@ -324,6 +389,99 @@ export default function AreaAluno({ profile }) {
       </main>
     </div>
   )
+}
+
+function calculateGeneralProgress(diagnostics) {
+  if (!diagnostics.length) {
+    return {
+      value: 0,
+      label: 'Configure o edital e registre seus primeiros resultados.',
+    }
+  }
+
+  const valid = diagnostics.filter((item) => item.percent_minimum !== null && item.percent_minimum !== undefined)
+
+  if (!valid.length) {
+    return {
+      value: 0,
+      label: 'Registre seus resultados para calcular a preparação geral.',
+    }
+  }
+
+  const average = valid.reduce((sum, item) => {
+    const percent = Math.min(Number(item.percent_minimum) || 0, 120)
+    return sum + percent
+  }, 0) / valid.length
+
+  const value = Math.max(0, Math.min(100, Math.round(average)))
+
+  let label = 'Você está construindo sua preparação.'
+  if (value < 70) label = 'Zona crítica: priorize base, técnica e regularidade.'
+  else if (value < 90) label = 'Em evolução: ainda falta consistência para o mínimo.'
+  else if (value < 100) label = 'Perto do índice: foco em margem de segurança.'
+  else label = 'Mínimo atingido nas provas registradas. Agora busque margem segura.'
+
+  return { value, label }
+}
+
+function buildTrainingFocus({ level, daysToTaf, criticalTests, diagnostics }) {
+  if (!diagnostics.length) {
+    return {
+      title: 'Configurar edital',
+      text: 'O primeiro passo é informar as provas cobradas e os índices mínimos.',
+      items: [
+        { title: 'Configurar edital', description: 'Selecione as provas e informe os mínimos.' },
+        { title: 'Registrar teste base', description: 'Faça um teste inicial para liberar diagnóstico.' },
+        { title: 'Começar com segurança', description: 'Evite treinos aleatórios antes do diagnóstico.' },
+      ],
+    }
+  }
+
+  if (criticalTests.length) {
+    return {
+      title: `Corrigir ${criticalTests[0].test_name}`,
+      text: 'Existe pelo menos uma prova abaixo do mínimo ou sem margem. Esta deve ser a prioridade imediata.',
+      items: [
+        { title: criticalTests[0].test_name, description: 'Prioridade número 1 do momento.' },
+        { title: 'Técnica correta', description: 'Corrija execução antes de aumentar intensidade.' },
+        { title: 'Progressão semanal', description: 'Registre novos testes para confirmar evolução.' },
+      ],
+    }
+  }
+
+  if (level === 'blindagem') {
+    return {
+      title: 'Manter desempenho',
+      text: 'Você está acima da meta segura. Agora o foco é chegar inteiro, consistente e confiante.',
+      items: [
+        { title: 'Simulado específico', description: 'Treine conforme a ordem e regras do edital.' },
+        { title: 'Prevenção de lesões', description: 'Controle volume, sono, dor e recuperação.' },
+        { title: 'Manutenção', description: 'Não arrisque excesso desnecessário.' },
+      ],
+    }
+  }
+
+  if (daysToTaf !== null && daysToTaf <= 30) {
+    return {
+      title: 'Reta final',
+      text: 'Com pouco tempo até o TAF, a prioridade é simular prova, evitar lesão e consolidar desempenho.',
+      items: [
+        { title: 'Simulados controlados', description: 'Reproduza o edital sem exagerar no volume.' },
+        { title: 'Recuperação', description: 'Chegar descansado é parte da estratégia.' },
+        { title: 'Execução limpa', description: 'Evite perder repetições por erro técnico.' },
+      ],
+    }
+  }
+
+  return {
+    title: 'Criar margem',
+    text: 'Você já avançou, mas ainda precisa transformar mínimo em segurança.',
+    items: [
+      { title: 'Meta segura', description: 'Busque resultado acima do mínimo do edital.' },
+      { title: 'Consistência', description: 'Treine com regularidade e registre evolução.' },
+      { title: 'Controle de risco', description: 'Evite pular etapas ou forçar demais.' },
+    ],
+  }
 }
 
 function buildNextActions({ hasExam, hasResults, level, criticalTests, daysToTaf }) {
@@ -389,9 +547,9 @@ function buildNextActions({ hasExam, hasResults, level, criticalTests, daysToTaf
       },
       {
         title: 'Evitar treino aleatório',
-        text: 'Mantenha o foco no Método M60: base, progressão, performance e segurança.',
+        text: 'Mantenha foco: base, progressão, performance e segurança.',
         href: '/area-do-aluno',
-        cta: 'Ver módulos',
+        cta: 'Ver painel',
       },
     ]
   }
@@ -443,51 +601,27 @@ function buildNextActions({ hasExam, hasResults, level, criticalTests, daysToTaf
   ]
 }
 
-function buildCourseModules(level, activeExam, diagnostics) {
-  return [
-    {
-      tag: 'Módulo 01',
-      title: 'Orientação inicial',
-      text: 'Como usar a Área Premium, configurar edital e acompanhar evolução.',
-      status: activeExam ? 'Liberado' : 'Configure o edital',
-      highlight: !activeExam,
-    },
-    {
-      tag: 'Módulo 02',
-      title: 'Base física',
-      text: 'Construção de resistência, força, técnica e segurança para quem está abaixo do índice.',
-      status: level === 'base' || level === 'arranque' ? 'Prioridade atual' : 'Recomendado',
-      highlight: level === 'base' || level === 'arranque',
-    },
-    {
-      tag: 'Módulo 03',
-      title: 'Progressão por prova',
-      text: 'Estratégias específicas para corrida, barra, flexão, abdominal e demais testes.',
-      status: diagnostics.length ? 'Usar conforme prova crítica' : 'Aguardando diagnóstico',
-      highlight: level === 'progressao',
-    },
-    {
-      tag: 'Módulo 04',
-      title: 'Performance e simulados',
-      text: 'Preparação para criar margem e executar bem mesmo sob pressão.',
-      status: level === 'performance' || level === 'blindagem' ? 'Prioridade atual' : 'Liberado após base',
-      highlight: level === 'performance',
-    },
-    {
-      tag: 'Módulo 05',
-      title: 'Blindagem final',
-      text: 'Manutenção, prevenção de lesões, recuperação e ajustes para a reta final.',
-      status: level === 'blindagem' ? 'Prioridade atual' : 'Liberado na fase final',
-      highlight: level === 'blindagem',
-    },
-    {
-      tag: 'Materiais',
-      title: 'Planilhas e guias',
-      text: 'Área reservada para PDF, cronograma, guias técnicos e materiais complementares.',
-      status: 'Em preparação',
-      highlight: false,
-    },
-  ]
+function buildRecentEvolution(recentResults) {
+  if (!recentResults.length) {
+    return {
+      total: 0,
+      label: 'Nenhum resultado recente. Registre seu primeiro teste.',
+    }
+  }
+
+  const now = new Date()
+  const last30 = recentResults.filter((item) => {
+    const date = new Date(item.result_date)
+    const diff = now.getTime() - date.getTime()
+    return diff <= 30 * 24 * 60 * 60 * 1000
+  })
+
+  return {
+    total: last30.length,
+    label: last30.length
+      ? 'Resultados registrados nos últimos 30 dias.'
+      : 'Há resultados salvos, mas nenhum nos últimos 30 dias.',
+  }
 }
 
 function getRisk(level) {
@@ -526,39 +660,43 @@ function getLevelInfo(level) {
   const levels = {
     base: {
       label: 'Base',
-      short: 'Zona crítica. Construir fundamento antes de acelerar.',
+      commercialLabel: 'Risco de reprovação',
+      description: 'sua preparação está em zona crítica. O foco agora é construir base, corrigir técnica e evitar treino aleatório.',
+      long: 'Existe pelo menos uma prova em situação crítica. A prioridade é construir fundamento físico e técnico antes de aumentar intensidade.',
     },
     arranque: {
       label: 'Arranque',
-      short: 'Abaixo do mínimo, mas com ponto de partida.',
+      commercialLabel: 'Em recuperação',
+      description: 'você já tem ponto de partida, mas ainda está abaixo do mínimo. A prioridade é evoluir com regularidade.',
+      long: 'Você ainda não está seguro para o TAF. O foco é progressão controlada, técnica e constância.',
     },
     progressao: {
       label: 'Progressão',
-      short: 'Perto do índice. Falta criar margem.',
+      commercialLabel: 'Perto da aprovação',
+      description: 'você está se aproximando do índice, mas ainda precisa criar margem para não depender de um dia perfeito.',
+      long: 'Você está próximo do mínimo. Agora precisa transformar proximidade em segurança.',
     },
     performance: {
       label: 'Performance',
-      short: 'Mínimo atingido. Agora é consistência.',
+      commercialLabel: 'Apto com atenção',
+      description: 'você já atingiu o mínimo em provas importantes. Agora o foco é consistência e margem.',
+      long: 'O mínimo foi atingido, mas ainda é importante consolidar desempenho e evitar queda no dia da prova.',
     },
     blindagem: {
       label: 'Blindagem',
-      short: 'Acima da meta segura. Manter, simular e prevenir lesões.',
+      commercialLabel: 'Zona segura',
+      description: 'você está acima da meta segura. O foco agora é manter desempenho, simular o edital e evitar lesão.',
+      long: 'Você já tem margem de segurança. A fase atual exige manutenção, controle de carga e recuperação inteligente.',
     },
     sem_resultado: {
       label: 'Sem resultado',
-      short: 'Registre seu teste para liberar diagnóstico.',
+      commercialLabel: 'Diagnóstico pendente',
+      description: 'registre seus resultados para desbloquear a leitura completa da preparação.',
+      long: 'Ainda não há dados suficientes para avaliar seu nível atual.',
     },
   }
 
   return levels[level] || levels.sem_resultado
-}
-
-function getAttentionTest(summary, diagnostics) {
-  const valid = (diagnostics || [])
-    .filter((item) => item.percent_minimum !== null && item.percent_minimum !== undefined)
-    .sort((a, b) => Number(a.percent_minimum) - Number(b.percent_minimum))
-
-  return summary?.weakest_test || valid[0]?.test_name || '—'
 }
 
 function parseLocalDate(dateValue) {
@@ -610,8 +748,8 @@ function formatDaysToTaf(days) {
   }
 
   return {
-    value: String(days),
-    label: 'Dias restantes para ajustar sua preparação.',
+    value: `${days}`,
+    label: 'dias restantes',
   }
 }
 

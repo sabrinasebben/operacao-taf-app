@@ -1791,3 +1791,1162 @@ input:focus {
     padding: 24px;
   }
 }
+/* ================================
+   HISTÓRICO AVANÇADO — FASE 7
+================================ */
+
+.advanced-tabs {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.all-tests-tab {
+  border-color: rgba(126,211,33,.34);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.10), transparent 40%),
+    rgba(255,255,255,.045);
+}
+
+.all-tests-evaluation-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.all-test-eval-card {
+  border-radius: 22px;
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 16px;
+  min-height: 170px;
+}
+
+.all-test-eval-card span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+
+.all-test-eval-card strong {
+  display: block;
+  color: white;
+  font-size: 38px;
+  letter-spacing: -.04em;
+  line-height: .9;
+  margin-bottom: 10px;
+}
+
+.all-test-eval-card small {
+  display: inline-flex;
+  width: fit-content;
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(126,211,33,.12);
+  color: var(--green);
+  font-weight: 950;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.all-test-eval-meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.all-test-eval-meta p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.all-test-eval-meta b {
+  color: #D7DEE7;
+}
+
+.delete-result-btn {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,59,59,.42);
+  background: rgba(255,59,59,.10);
+  color: #FFB0B0;
+  font-weight: 950;
+  font-size: 12px;
+  text-transform: uppercase;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.delete-result-btn:hover {
+  background: rgba(255,59,59,.18);
+  border-color: rgba(255,59,59,.70);
+}
+
+.delete-result-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1200px) {
+  .advanced-tabs,
+  .all-tests-evaluation-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .all-test-eval-card {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .advanced-tabs,
+  .all-tests-evaluation-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================
+   FASE 7.1 — LINHA DO TEMPO GERAL AGRUPADA
+================================ */
+
+.general-results-table td {
+  vertical-align: top;
+}
+
+.general-results-table td small {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.general-test-stack {
+  display: grid;
+  gap: 10px;
+  min-width: 360px;
+}
+
+.general-test-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.035);
+}
+
+.general-test-line strong {
+  color: white;
+  font-size: 14px;
+  display: block;
+}
+
+.general-test-line small {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.general-notes {
+  display: grid;
+  gap: 6px;
+}
+
+.general-notes small {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+@media (max-width: 800px) {
+  .general-test-line {
+    grid-template-columns: 1fr;
+  }
+
+  .general-test-stack {
+    min-width: 260px;
+  }
+}
+
+/* ================================
+   ÁREA ADMINISTRATIVA — FASE 8
+================================ */
+
+.admin-hero {
+  border-radius: 30px;
+  padding: 32px;
+  margin-bottom: 18px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.14), transparent 36%),
+    linear-gradient(145deg, rgba(23,34,44,.96), rgba(5,10,14,.90));
+  border: 1px solid rgba(126,211,33,.30);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.admin-hero h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(38px, 5vw, 72px);
+  line-height: .92;
+  letter-spacing: -.06em;
+  text-transform: uppercase;
+}
+
+.admin-hero p {
+  color: #C5CFDA;
+  max-width: 840px;
+  font-size: 16px;
+}
+
+.admin-hero-badge {
+  border-radius: 24px;
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,.13);
+  background: rgba(255,255,255,.045);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.admin-hero-badge span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-hero-badge strong {
+  display: block;
+  color: var(--green);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -.04em;
+  text-transform: uppercase;
+  margin: 12px 0;
+}
+
+.admin-hero-badge small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.admin-summary-grid {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.admin-toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.admin-toolbar input {
+  min-height: 52px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.055);
+  color: white;
+  padding: 0 14px;
+  outline: none;
+  font-size: 15px;
+}
+
+.admin-toolbar input:focus {
+  border-color: rgba(126,211,33,.78);
+  box-shadow: 0 0 0 3px rgba(126,211,33,.14);
+}
+
+.admin-toolbar span {
+  color: var(--muted);
+  font-weight: 900;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-users-table td small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.admin-status-pill,
+.admin-role-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-status-pill.active {
+  background: rgba(126,211,33,.14);
+  border: 1px solid rgba(126,211,33,.45);
+  color: #CFFFA0;
+}
+
+.admin-status-pill.blocked {
+  background: rgba(255,59,59,.12);
+  border: 1px solid rgba(255,59,59,.42);
+  color: #FFB0B0;
+}
+
+.admin-role-pill.admin {
+  background: rgba(126,211,33,.18);
+  border: 1px solid rgba(126,211,33,.50);
+  color: var(--green);
+}
+
+.admin-role-pill.student {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  color: var(--muted);
+}
+
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-btn {
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.07);
+  color: white;
+  font-weight: 950;
+  font-size: 12px;
+  text-transform: uppercase;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.admin-btn.success {
+  border-color: rgba(126,211,33,.50);
+  background: rgba(126,211,33,.13);
+  color: #CFFFA0;
+}
+
+.admin-btn.danger {
+  border-color: rgba(255,59,59,.45);
+  background: rgba(255,59,59,.11);
+  color: #FFB0B0;
+}
+
+.admin-btn.neutral {
+  color: #D7DEE7;
+}
+
+.admin-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.admin-note-panel {
+  border-color: rgba(126,211,33,.20);
+}
+
+.admin-note-panel p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.admin-note-panel strong {
+  color: white;
+}
+
+@media (max-width: 1100px) {
+  .admin-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .admin-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-hero {
+    padding: 24px;
+  }
+}
+OPERAÇÃO TAF — FASE 8.2
+ADMIN MASTER SABRINA + GERENCIAR ADMINISTRADORES
+
+Objetivo:
+Substituir a lógica antiga de admin@operacaotaf.com por:
+
+Admin master:
+sabrinasebben@sevbenoficial.com
+
+Dentro do painel /admin será possível:
+- adicionar outros e-mails administradores;
+- remover/reativar e-mails administradores;
+- liberar/bloquear alunos;
+- marcar perfil como admin/aluno.
+
+IMPORTANTE SOBRE SENHA:
+A senha 123456 deve ser usada apenas como temporária para criar/testar o usuário no Supabase Auth.
+Depois troque por uma senha forte.
+A senha não fica no código.
+
+Arquivos:
+
+1. src/pages/Admin.jsx
+   Substituir:
+   C:\Users\diego\Desktop\operacao-taf-app\src\pages\Admin.jsx
+
+2. src/pages/AreaAluno.jsx
+   Substituir:
+   C:\Users\diego\Desktop\operacao-taf-app\src\pages\AreaAluno.jsx
+
+3. src/App.jsx
+   Substituir:
+   C:\Users\diego\Desktop\operacao-taf-app\src\App.jsx
+
+4. src/App.css_APPEND_FASE8_2.txt
+   Copiar tudo e colar no FINAL de:
+   C:\Users\diego\Desktop\operacao-taf-app\src\App.css
+
+5. supabase_fase8_2_admin_master_sabrina.sql
+   Executar no Supabase SQL Editor.
+
+ANTES DE TESTAR:
+No Supabase Authentication > Users:
+crie o usuário:
+sabrinasebben@sevbenoficial.com
+senha temporária: 123456
+
+Depois execute o SQL da Fase 8.2.
+
+Teste:
+npm run dev
+http://localhost:5173/login
+
+Entrar com:
+sabrinasebben@sevbenoficial.com
+123456
+
+Depois abrir:
+http://localhost:5173/admin
+
+/* ================================
+   FASE 8.3 — ADMIN PROFISSIONAL
+================================ */
+
+.admin-header .app-nav a {
+  white-space: nowrap;
+}
+
+.admin-command-hero {
+  border-radius: 30px;
+  padding: 32px;
+  margin-bottom: 18px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.14), transparent 36%),
+    linear-gradient(145deg, rgba(23,34,44,.96), rgba(5,10,14,.90));
+  border: 1px solid rgba(126,211,33,.30);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.admin-command-hero h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(42px, 6vw, 84px);
+  line-height: .92;
+  letter-spacing: -.06em;
+  text-transform: uppercase;
+}
+
+.admin-command-hero p {
+  color: #C5CFDA;
+  max-width: 860px;
+  font-size: 16px;
+}
+
+.admin-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.admin-kpi-card {
+  min-height: 150px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.admin-kpi-card.good {
+  border-color: rgba(126,211,33,.35);
+}
+
+.admin-kpi-card.danger {
+  border-color: rgba(255,59,59,.35);
+}
+
+.admin-kpi-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.admin-kpi-card strong {
+  color: white;
+  font-size: 44px;
+  line-height: .9;
+  letter-spacing: -.05em;
+}
+
+.admin-kpi-card.good strong {
+  color: var(--green);
+}
+
+.admin-kpi-card.danger strong {
+  color: var(--red);
+}
+
+.admin-kpi-card small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+.admin-tabs button {
+  min-height: 46px;
+  border-radius: 999px;
+  padding: 0 18px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.055);
+  color: #D7DEE7;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  cursor: pointer;
+}
+
+.admin-tabs button.active {
+  background: linear-gradient(180deg, #8BE33B, #61B91F);
+  color: #071009;
+  border-color: rgba(126,211,33,.7);
+}
+
+.admin-overview-grid {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 18px;
+}
+
+.admin-attention-list,
+.admin-activity-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.admin-attention-item,
+.admin-activity-item {
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.admin-attention-item strong,
+.admin-activity-item strong {
+  display: block;
+  color: white;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.admin-attention-item small,
+.admin-activity-item small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.empty-state.compact {
+  padding: 20px;
+  margin-top: 18px;
+}
+
+.admin-risk-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.admin-risk-pill.risk-alto {
+  background: rgba(255,59,59,.12);
+  border: 1px solid rgba(255,59,59,.42);
+  color: #FFB0B0;
+}
+
+.admin-risk-pill.risk-medio {
+  background: rgba(255,206,33,.12);
+  border: 1px solid rgba(255,206,33,.38);
+  color: #FFE384;
+}
+
+.admin-risk-pill.risk-baixo {
+  background: rgba(126,211,33,.14);
+  border: 1px solid rgba(126,211,33,.42);
+  color: #CFFFA0;
+}
+
+.admin-risk-pill.risk-aguardando {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.14);
+  color: var(--muted);
+}
+
+.admin-mini-label {
+  display: inline-flex !important;
+  width: fit-content;
+  margin-top: 8px !important;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(126,211,33,.12);
+  color: var(--green) !important;
+  font-weight: 950;
+}
+
+@media (max-width: 1200px) {
+  .admin-command-hero,
+  .admin-overview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-command-hero {
+    padding: 24px;
+  }
+}
+
+/* ================================
+   FASE 8.5 — PRIMEIRO ACESSO SOMENTE ADMIN
+================================ */
+
+.login-mode-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1.35fr 1fr;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.login-mode-tabs button {
+  min-height: 40px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.055);
+  color: #D7DEE7;
+  font-weight: 950;
+  font-size: 12px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.login-mode-tabs button.active {
+  background: linear-gradient(180deg, #8BE33B, #61B91F);
+  color: #071009;
+  border-color: rgba(126,211,33,.75);
+}
+
+.admin-access-note {
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(126,211,33,.09);
+  border: 1px solid rgba(126,211,33,.22);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.admin-access-note strong {
+  color: var(--green);
+}
+
+@media (max-width: 560px) {
+  .login-mode-tabs {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================================
+   FASE 10 — DASHBOARD PROFISSIONAL DO ALUNO
+================================ */
+
+.student-command-hero {
+  border-radius: 32px;
+  padding: 34px;
+  margin-bottom: 18px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(126,211,33,.16), transparent 38%),
+    linear-gradient(145deg, rgba(23,34,44,.98), rgba(5,10,14,.92));
+  border: 1px solid rgba(255,255,255,.12);
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-columns: 1fr 270px;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.student-command-hero.level-base,
+.student-command-hero.level-arranque {
+  border-color: rgba(255,59,59,.38);
+}
+
+.student-command-hero.level-progressao {
+  border-color: rgba(255,206,33,.34);
+}
+
+.student-command-hero.level-performance,
+.student-command-hero.level-blindagem {
+  border-color: rgba(126,211,33,.45);
+}
+
+.student-hero-main h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(42px, 6vw, 86px);
+  line-height: .88;
+  letter-spacing: -.07em;
+  text-transform: uppercase;
+}
+
+.student-hero-main p {
+  color: #C5CFDA;
+  font-size: 17px;
+  line-height: 1.5;
+  max-width: 880px;
+}
+
+.student-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.student-countdown-card {
+  border-radius: 26px;
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.045);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.student-countdown-card span,
+.student-risk-card span,
+.student-progress-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.student-countdown-card strong {
+  display: block;
+  color: white;
+  font-size: clamp(44px, 5vw, 70px);
+  line-height: .9;
+  letter-spacing: -.07em;
+  margin: 12px 0;
+}
+
+.student-countdown-card small {
+  color: var(--muted);
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: 900;
+}
+
+.student-top-grid {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.student-progress-card,
+.student-risk-card {
+  min-height: 172px;
+  border-radius: 22px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.student-card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.student-card-head strong,
+.student-risk-card strong {
+  color: white;
+  font-size: 42px;
+  line-height: .9;
+  letter-spacing: -.06em;
+}
+
+.student-progress-card p,
+.student-risk-card small {
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.progress-bar-shell {
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #61B91F, #8BE33B);
+  box-shadow: 0 0 20px rgba(126,211,33,.35);
+}
+
+.student-risk-card.risk-alto {
+  border-color: rgba(255,59,59,.42);
+}
+
+.student-risk-card.risk-alto strong {
+  color: var(--red);
+}
+
+.student-risk-card.risk-medio {
+  border-color: rgba(255,206,33,.42);
+}
+
+.student-risk-card.risk-medio strong {
+  color: var(--yellow);
+}
+
+.student-risk-card.risk-baixo {
+  border-color: rgba(126,211,33,.42);
+}
+
+.student-risk-card.risk-baixo strong {
+  color: var(--green);
+}
+
+.student-situation-grid {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.focus-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.focus-item {
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+}
+
+.focus-item strong {
+  display: block;
+  color: white;
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.focus-item small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.student-readiness-panel {
+  border-color: rgba(126,211,33,.24);
+}
+
+.student-readiness-panel h2 {
+  color: white;
+  font-size: 44px;
+  line-height: .9;
+  letter-spacing: -.05em;
+  margin: 12px 0;
+  text-transform: uppercase;
+}
+
+.student-readiness-panel p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.readiness-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.readiness-tags span {
+  border-radius: 999px;
+  padding: 8px 10px;
+  background: rgba(126,211,33,.10);
+  border: 1px solid rgba(126,211,33,.22);
+  color: var(--green);
+  font-weight: 950;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.student-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.student-action-card {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+}
+
+.student-action-card.priority-1 {
+  border-color: rgba(126,211,33,.45);
+}
+
+.student-action-card h3 {
+  margin: 0 0 8px;
+  color: white;
+  font-size: 20px;
+}
+
+.student-action-card p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.student-action-card a {
+  color: var(--green);
+  font-weight: 950;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-size: 12px;
+}
+
+.student-analysis-grid {
+  display: grid;
+  grid-template-columns: 1.3fr .7fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.student-tests-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.student-test-row {
+  border-radius: 18px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+}
+
+.student-test-row strong {
+  color: white;
+  font-size: 17px;
+  display: block;
+}
+
+.student-test-row small {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 5px;
+  display: block;
+}
+
+.student-test-percent {
+  text-align: right;
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+}
+
+.student-test-percent strong {
+  font-size: 28px;
+  line-height: .9;
+}
+
+.recent-evolution-box {
+  border-radius: 24px;
+  padding: 24px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.12);
+  margin: 20px 0;
+}
+
+.recent-evolution-box strong {
+  display: block;
+  color: var(--green);
+  font-size: 64px;
+  line-height: .9;
+  letter-spacing: -.06em;
+}
+
+.recent-evolution-box span {
+  display: block;
+  color: white;
+  font-weight: 950;
+  text-transform: uppercase;
+  margin: 10px 0;
+}
+
+.recent-evolution-box small {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.full-width-btn {
+  width: 100%;
+}
+
+.hotmart-reminder-panel {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px;
+  align-items: center;
+  border-color: rgba(126,211,33,.22);
+}
+
+@media (max-width: 1200px) {
+  .student-command-hero,
+  .student-situation-grid,
+  .student-analysis-grid,
+  .hotmart-reminder-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .student-top-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .focus-list,
+  .student-action-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .student-command-hero {
+    padding: 24px;
+  }
+
+  .student-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-test-row {
+    grid-template-columns: 1fr;
+  }
+
+  .student-test-percent {
+    text-align: left;
+    justify-items: start;
+  }
+}

@@ -5,6 +5,7 @@ import ConfigurarEdital from './pages/ConfigurarEdital'
 import CalculadoraPremium from './pages/CalculadoraPremium'
 import Historico from './pages/Historico'
 import PerfilAluno from './pages/PerfilAluno'
+import Admin from './pages/Admin'
 import ProtectedRoute from './components/ProtectedRoute'
 import './App.css'
 
@@ -59,12 +60,20 @@ export default function App() {
         }
       />
 
-
       <Route
         path="/perfil"
         element={
           <ProtectedRoute>
             {(profile) => <PerfilAluno profile={profile} />}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            {(profile) => <Admin profile={profile} />}
           </ProtectedRoute>
         }
       />

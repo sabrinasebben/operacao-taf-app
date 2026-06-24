@@ -7,7 +7,8 @@ export default function Historico({ profile }) {
   const [activeExam, setActiveExam] = useState(null)
   const [examTests, setExamTests] = useState([])
   const [results, setResults] = useState([])
-  const [selectedTestId, setSelectedTestId] = useState('')
+  const [selectedTestId, setSelectedTestId] = useState('all')
+  const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
     loadHistory()
@@ -73,12 +74,6 @@ export default function Historico({ profile }) {
     }
 
     setResults(resultsData || [])
-
-    const firstTestWithResult = (testsData || []).find((test) =>
-      (resultsData || []).some((result) => result.exam_test_id === test.id)
-    )
-
-    setSelectedTestId((current) => current || firstTestWithResult?.id || testsData?.[0]?.id || '')
     setLoading(false)
   }
 
@@ -87,15 +82,76 @@ export default function Historico({ profile }) {
     window.location.href = '/login'
   }
 
+  async function handleDeleteResult(result) {
+    const testName = getTestName(result.exam_test_id, examTests)
+    const confirmed = window.confirm(
+      `Deseja apagar este registro?\n\n${testName}\nData: ${formatDate(result.result_date)}\nResultado: ${result.result_value}`
+    )
+
+    if (!confirmed) return
+
+    setDeletingId(result.id)
+    setMessage('')
+
+    const { error } = await supabase
+      .from('test_results')
+      .delete()
+      .eq('id', result.id)
+      .eq('user_id', profile.user_id)
+
+    setDeletingId(null)
+
+    if (error) {
+      setMessage('Erro ao apagar registro.')
+      return
+    }
+
+    setMessage('Registro apagado com sucesso.')
+    await loadHistory()
+  }
+
+  async function handleDeleteResultGroup(group) {
+    const confirmed = window.confirm(
+      `Deseja apagar este teste completo?\n\nData: ${formatDate(group.date)}\nRegistros: ${group.items.length}\n\nTodas as provas salvas nessa data serão apagadas.`
+    )
+
+    if (!confirmed) return
+
+    setDeletingId(group.date)
+    setMessage('')
+
+    const ids = group.items.map((item) => item.result.id).filter(Boolean)
+
+    const { error } = await supabase
+      .from('test_results')
+      .delete()
+      .in('id', ids)
+      .eq('user_id', profile.user_id)
+
+    setDeletingId(null)
+
+    if (error) {
+      setMessage('Erro ao apagar teste completo.')
+      return
+    }
+
+    setMessage('Teste apagado com sucesso.')
+    await loadHistory()
+  }
+
   const testStats = useMemo(() => {
     return examTests.map((test) => {
       const testResults = results
         .filter((result) => result.exam_test_id === test.id)
-        .sort((a, b) => new Date(a.result_date) - new Date(b.result_date))
+        .sort((a, b) => {
+          const dateA = new Date(a.result_date).getTime()
+          const dateB = new Date(b.result_date).getTime()
+          if (dateA !== dateB) return dateA - dateB
+          return new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+        })
 
       const first = testResults[0] || null
       const latest = testResults[testResults.length - 1] || null
-
       const best = getBestResult(test, testResults)
       const firstPercent = first ? calculatePercent(test, first.result_value) : null
       const latestPercent = latest ? calculatePercent(test, latest.result_value) : null
@@ -120,7 +176,12 @@ export default function Historico({ profile }) {
     })
   }, [examTests, results])
 
-  const selectedStats = testStats.find((item) => item.test.id === selectedTestId) || testStats[0] || null
+  const selectedStats =
+    selectedTestId === 'all'
+      ? null
+      : testStats.find((item) => item.test.id === selectedTestId) || null
+
+  const generalEvaluation = useMemo(() => buildGeneralEvaluation(testStats), [testStats])
 
   const totalSessions = useMemo(() => {
     const dates = new Set(results.map((result) => result.result_date))
@@ -134,6 +195,24 @@ export default function Historico({ profile }) {
   const testsBelowMinimum = testStats.filter((item) =>
     ['critico', 'abaixo_do_minimo', 'proximo_do_minimo'].includes(item.status)
   ).length
+
+  const allResultsWithTest = useMemo(() => {
+    return results
+      .map((result) => {
+        const test = examTests.find((item) => item.id === result.exam_test_id)
+        return { result, test }
+      })
+      .filter((item) => item.test)
+      .sort((a, b) => {
+        const dateDiff = new Date(b.result.result_date).getTime() - new Date(a.result.result_date).getTime()
+        if (dateDiff !== 0) return dateDiff
+        return new Date(b.result.created_at || 0).getTime() - new Date(a.result.created_at || 0).getTime()
+      })
+  }, [results, examTests])
+
+  const generalRows = useMemo(() => {
+    return buildGeneralTimelineRows(allResultsWithTest, examTests)
+  }, [allResultsWithTest, examTests])
 
   if (loading) {
     return (
@@ -165,6 +244,7 @@ export default function Historico({ profile }) {
             <a href="/area-do-aluno">Dashboard</a>
             <a href="/configurar-edital">Configurar Edital</a>
             <a href="/calculadora-premium">Calculadora</a>
+            <a href="/perfil">Perfil</a>
             <button onClick={handleLogout}>Sair</button>
           </nav>
         </header>
@@ -201,6 +281,7 @@ export default function Historico({ profile }) {
           <a href="/configurar-edital">Configurar Edital</a>
           <a href="/calculadora-premium">Calculadora</a>
           <a href="/historico">Histórico</a>
+          <a href="/perfil">Perfil</a>
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -255,10 +336,10 @@ export default function Historico({ profile }) {
         <section className="premium-panel">
           <div className="panel-head">
             <div>
-              <div className="kicker">Selecionar prova</div>
-              <h2>Evolução individual</h2>
+              <div className="kicker">Avaliação</div>
+              <h2>Escolha a visualização</h2>
               <p className="muted">
-                Escolha uma prova para visualizar a linha de evolução e os registros detalhados.
+                Veja todas as provas juntas ou selecione uma prova específica para analisar a linha de evolução detalhada.
               </p>
             </div>
 
@@ -267,12 +348,23 @@ export default function Historico({ profile }) {
             </a>
           </div>
 
-          <div className="history-test-tabs">
+          <div className="history-test-tabs advanced-tabs">
+            <button
+              type="button"
+              className={`history-test-tab all-tests-tab ${selectedTestId === 'all' ? 'active' : ''}`}
+              onClick={() => setSelectedTestId('all')}
+            >
+              <strong>Avaliação geral</strong>
+              <span className={`taf-status-pill status-${generalEvaluation.status}`}>
+                {generalEvaluation.label}
+              </span>
+            </button>
+
             {testStats.map((item) => (
               <button
                 type="button"
                 key={item.test.id}
-                className={`history-test-tab ${selectedStats?.test.id === item.test.id ? 'active' : ''}`}
+                className={`history-test-tab ${selectedTestId === item.test.id ? 'active' : ''}`}
                 onClick={() => setSelectedTestId(item.test.id)}
               >
                 <strong>{item.test.test_name}</strong>
@@ -284,7 +376,89 @@ export default function Historico({ profile }) {
           </div>
         </section>
 
-        {selectedStats ? (
+        {selectedTestId === 'all' ? (
+          <>
+            <section className="profile-grid selected-test-grid">
+              <div className="info-card">
+                <span>Avaliação geral</span>
+                <strong>{generalEvaluation.label}</strong>
+              </div>
+
+              <div className="info-card">
+                <span>Menor margem</span>
+                <strong>{generalEvaluation.attentionTest || '—'}</strong>
+              </div>
+
+              <div className="info-card">
+                <span>Média dos mínimos</span>
+                <strong>{generalEvaluation.averagePercent !== null ? `${formatDecimal(generalEvaluation.averagePercent)}%` : '—'}</strong>
+              </div>
+
+              <div className="info-card">
+                <span>Provas críticas</span>
+                <strong>{generalEvaluation.criticalCount}</strong>
+              </div>
+
+              <div className="info-card">
+                <span>Meta segura</span>
+                <strong>{testsAtSafeGoal}/{examTests.length}</strong>
+              </div>
+
+              <div className="info-card">
+                <span>Último teste</span>
+                <strong>{latestDate ? formatDate(latestDate) : '—'}</strong>
+              </div>
+            </section>
+
+            <section className="premium-panel">
+              <div className="panel-head">
+                <div>
+                  <div className="kicker">Todas as provas</div>
+                  <h2>Avaliação conjunta</h2>
+                  <p className="muted">
+                    Leitura geral do desempenho em todas as provas do edital. Aqui o foco é identificar o que ameaça a aprovação e o que já está seguro.
+                  </p>
+                </div>
+              </div>
+
+              <div className="all-tests-evaluation-grid">
+                {testStats.map((item) => (
+                  <div className={`all-test-eval-card status-border-${item.status}`} key={item.test.id}>
+                    <div>
+                      <span>{item.test.test_name}</span>
+                      <strong>{item.latestPercent !== null ? `${formatDecimal(item.latestPercent)}%` : '—'}</strong>
+                      <small>{formatStatus(item.status)}</small>
+                    </div>
+
+                    <div className="all-test-eval-meta">
+                      <p><b>Último:</b> {item.latest ? formatValueByUnit(item.latest.result_value, item.test.unit, item.test.calculation_type) : 'Sem resultado'}</p>
+                      <p><b>Melhor:</b> {item.best ? formatValueByUnit(item.best.result_value, item.test.unit, item.test.calculation_type) : '—'}</p>
+                      <p><b>Evolução:</b> {item.progress !== null ? formatProgress(item.test, item.progress) : '—'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="premium-panel">
+              <div className="panel-head">
+                <div>
+                  <div className="kicker">Todos os registros</div>
+                  <h2>Linha do tempo geral</h2>
+                  <p className="muted">
+                    Todos os resultados salvos, com opção de apagar registros duplicados ou lançados por engano.
+                  </p>
+                </div>
+              </div>
+
+              <GeneralResultsTable
+                rows={generalRows}
+                deletingId={deletingId}
+                onDeleteGroup={handleDeleteResultGroup}
+              />
+            </section>
+          </>
+        ) : selectedStats ? (
           <>
             <section className="profile-grid selected-test-grid">
               <div className="info-card">
@@ -349,52 +523,20 @@ export default function Historico({ profile }) {
                 <div>
                   <div className="kicker">Linha do tempo</div>
                   <h2>Registros da prova</h2>
+                  <p className="muted">
+                    Use o botão apagar para remover lançamentos duplicados ou feitos por engano.
+                  </p>
                 </div>
               </div>
 
-              <div className="premium-tests-table-wrap">
-                <table className="premium-tests-table">
-                  <thead>
-                    <tr>
-                      <th>Data</th>
-                      <th>Resultado</th>
-                      <th>% mínimo</th>
-                      <th>Status</th>
-                      <th>Observações</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {selectedStats.results.length ? (
-                      selectedStats.results
-                        .slice()
-                        .reverse()
-                        .map((result) => {
-                          const percent = calculatePercent(selectedStats.test, result.result_value)
-                          const status = getStatus(selectedStats.test, result.result_value)
-
-                          return (
-                            <tr key={result.id || `${result.result_date}-${result.result_value}`}>
-                              <td>{formatDate(result.result_date)}</td>
-                              <td>{formatValueByUnit(result.result_value, selectedStats.test.unit, selectedStats.test.calculation_type)}</td>
-                              <td>{formatDecimal(percent)}%</td>
-                              <td>
-                                <span className={`taf-status-pill status-${status}`}>
-                                  {formatStatus(status)}
-                                </span>
-                              </td>
-                              <td>{result.notes || '—'}</td>
-                            </tr>
-                          )
-                        })
-                    ) : (
-                      <tr>
-                        <td colSpan="5">Nenhum resultado registrado para esta prova.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+              <ResultsTable
+                rows={selectedStats.results
+                  .slice()
+                  .reverse()
+                  .map((result) => ({ result, test: selectedStats.test }))}
+                deletingId={deletingId}
+                onDelete={handleDeleteResult}
+              />
             </section>
           </>
         ) : (
@@ -441,6 +583,151 @@ export default function Historico({ profile }) {
           execução correta, condição física e regras específicas do edital.
         </p>
       </main>
+    </div>
+  )
+}
+
+function GeneralResultsTable({ rows, deletingId, onDeleteGroup }) {
+  return (
+    <div className="premium-tests-table-wrap">
+      <table className="premium-tests-table general-results-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Teste registrado</th>
+            <th>Avaliação geral</th>
+            <th>Observações</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {rows.length ? (
+            rows.map((group) => (
+              <tr key={group.date}>
+                <td>
+                  <strong>{formatDate(group.date)}</strong>
+                  <small>{group.items.length} prova(s)</small>
+                </td>
+
+                <td>
+                  <div className="general-test-stack">
+                    {group.items.map(({ result, test }) => {
+                      const percent = calculatePercent(test, result.result_value)
+                      const status = getStatus(test, result.result_value)
+
+                      return (
+                        <div className="general-test-line" key={result.id}>
+                          <div>
+                            <strong>{test.test_name}</strong>
+                            <small>{formatValueByUnit(result.result_value, test.unit, test.calculation_type)} · {percent !== null ? `${formatDecimal(percent)}%` : '—'}</small>
+                          </div>
+
+                          <span className={`taf-status-pill status-${status}`}>
+                            {formatStatus(status)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </td>
+
+                <td>
+                  <span className={`taf-status-pill status-${group.status}`}>
+                    {group.label}
+                  </span>
+                  <small>{group.summary}</small>
+                </td>
+
+                <td>
+                  {group.notes.length ? (
+                    <div className="general-notes">
+                      {group.notes.map((note, index) => (
+                        <small key={`${note}-${index}`}>{note}</small>
+                      ))}
+                    </div>
+                  ) : (
+                    '—'
+                  )}
+                </td>
+
+                <td>
+                  <button
+                    type="button"
+                    className="delete-result-btn"
+                    onClick={() => onDeleteGroup(group)}
+                    disabled={deletingId === group.date}
+                  >
+                    {deletingId === group.date ? 'Apagando...' : 'Apagar teste'}
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="5">Nenhum teste registrado.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function ResultsTable({ rows, deletingId, onDelete }) {
+  return (
+    <div className="premium-tests-table-wrap">
+      <table className="premium-tests-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Prova</th>
+            <th>Resultado</th>
+            <th>% mínimo</th>
+            <th>Status</th>
+            <th>Observações</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {rows.length ? (
+            rows.map(({ result, test }) => {
+              const percent = calculatePercent(test, result.result_value)
+              const status = getStatus(test, result.result_value)
+
+              return (
+                <tr key={result.id || `${result.result_date}-${result.result_value}-${test.id}`}>
+                  <td>{formatDate(result.result_date)}</td>
+                  <td><strong>{test.test_name}</strong></td>
+                  <td>{formatValueByUnit(result.result_value, test.unit, test.calculation_type)}</td>
+                  <td>{percent !== null ? `${formatDecimal(percent)}%` : '—'}</td>
+                  <td>
+                    <span className={`taf-status-pill status-${status}`}>
+                      {formatStatus(status)}
+                    </span>
+                  </td>
+                  <td>{result.notes || '—'}</td>
+                  <td>
+                    <button
+                      type="button"
+                      className="delete-result-btn"
+                      onClick={() => onDelete(result)}
+                      disabled={deletingId === result.id}
+                    >
+                      {deletingId === result.id ? 'Apagando...' : 'Apagar'}
+                    </button>
+                  </td>
+                </tr>
+              )
+            })
+          ) : (
+            <tr>
+              <td colSpan="7">Nenhum resultado registrado.</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -512,6 +799,121 @@ function SimpleLineChart({ stats }) {
       </div>
     </div>
   )
+}
+
+function buildGeneralTimelineRows(items, examTests) {
+  const groups = new Map()
+
+  items.forEach((item) => {
+    const date = item.result.result_date
+
+    if (!groups.has(date)) {
+      groups.set(date, [])
+    }
+
+    groups.get(date).push(item)
+  })
+
+  return Array.from(groups.entries())
+    .map(([date, groupItems]) => {
+      const sortedItems = groupItems
+        .slice()
+        .sort((a, b) => String(a.test.test_name).localeCompare(String(b.test.test_name)))
+
+      const statuses = sortedItems.map(({ result, test }) => getStatus(test, result.result_value))
+      const safeCount = statuses.filter((status) => status === 'atingiu_meta_segura').length
+      const minimumCount = statuses.filter((status) => status === 'atingiu_minimo').length
+      const criticalCount = statuses.filter((status) =>
+        ['critico', 'abaixo_do_minimo', 'proximo_do_minimo'].includes(status)
+      ).length
+
+      let status = 'sem_resultado'
+      let label = 'Parcial'
+      let summary = `${sortedItems.length}/${examTests.length} prova(s) registradas.`
+
+      if (criticalCount > 0) {
+        status = 'critico'
+        label = 'Atenção'
+        summary = `${criticalCount} prova(s) abaixo ou sem margem.`
+      } else if (safeCount === sortedItems.length && sortedItems.length === examTests.length) {
+        status = 'atingiu_meta_segura'
+        label = 'Teste completo seguro'
+        summary = 'Todas as provas do edital ficaram na meta segura.'
+      } else if (safeCount + minimumCount === sortedItems.length) {
+        status = 'atingiu_minimo'
+        label = 'Mínimo atingido'
+        summary = 'Todas as provas registradas atingiram pelo menos o mínimo.'
+      }
+
+      const notes = sortedItems
+        .map((item) => item.result.notes)
+        .filter(Boolean)
+
+      return {
+        date,
+        items: sortedItems,
+        status,
+        label,
+        summary,
+        notes,
+      }
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+}
+
+function buildGeneralEvaluation(testStats) {
+  const withResults = testStats.filter((item) => item.latestPercent !== null)
+  const criticalCount = testStats.filter((item) =>
+    ['critico', 'abaixo_do_minimo', 'proximo_do_minimo'].includes(item.status)
+  ).length
+
+  const safeCount = testStats.filter((item) => item.status === 'atingiu_meta_segura').length
+
+  const averagePercent = withResults.length
+    ? withResults.reduce((sum, item) => sum + Number(item.latestPercent), 0) / withResults.length
+    : null
+
+  const attention = withResults
+    .slice()
+    .sort((a, b) => Number(a.latestPercent) - Number(b.latestPercent))[0]
+
+  if (!withResults.length) {
+    return {
+      status: 'sem_resultado',
+      label: 'Sem resultado',
+      averagePercent,
+      criticalCount,
+      attentionTest: '—',
+    }
+  }
+
+  if (criticalCount > 0) {
+    return {
+      status: 'critico',
+      label: 'Atenção',
+      averagePercent,
+      criticalCount,
+      attentionTest: attention?.test.test_name || '—',
+    }
+  }
+
+  if (safeCount === testStats.length) {
+    return {
+      status: 'atingiu_meta_segura',
+      label: 'Meta segura',
+      averagePercent,
+      criticalCount,
+      attentionTest: attention?.test.test_name || '—',
+    }
+  }
+
+  return {
+    status: 'atingiu_minimo',
+    label: 'Aprovado parcial',
+    averagePercent,
+    criticalCount,
+    attentionTest: attention?.test.test_name || '—',
+  }
 }
 
 function calculatePercent(test, value) {
@@ -648,4 +1050,8 @@ function formatValueByUnit(value, unit, calculationType) {
 function formatValueForChart(value) {
   if (Number(value) >= 1000) return formatDecimal(value)
   return formatDecimal(value)
+}
+
+function getTestName(testId, tests) {
+  return tests.find((test) => test.id === testId)?.test_name || 'Prova'
 }
