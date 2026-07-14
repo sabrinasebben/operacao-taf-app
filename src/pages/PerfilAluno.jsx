@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import StudentNav from '../components/StudentNav'
 
 const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
 
@@ -99,14 +100,7 @@ export default function PerfilAluno({ profile }) {
           </div>
         </div>
 
-        <nav className="app-nav">
-          <a href="/area-do-aluno">Dashboard</a>
-          <a href="/configurar-edital">Configurar Edital</a>
-          <a href="/calculadora-premium">Calculadora</a>
-          <a href="/historico">Histórico</a>
-          <a href="/perfil">Perfil</a>
-          <button onClick={handleLogout}>Sair</button>
-        </nav>
+        <StudentNav profile={profile} onLogout={handleLogout} hotmartUrl={HOTMART_COURSE_URL} />
       </header>
 
       <main className="dashboard">

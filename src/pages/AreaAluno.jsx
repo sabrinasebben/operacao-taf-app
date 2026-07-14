@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import StudentNav from '../components/StudentNav'
 
 const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
 
@@ -122,10 +123,6 @@ export default function AreaAluno({ profile }) {
     )
   }, [diagnostics])
 
-  const progress = useMemo(() => {
-    return calculateGeneralProgress(diagnostics)
-  }, [diagnostics])
-
   const nextActions = useMemo(() => {
     return buildNextActions({
       hasExam: Boolean(activeExam),
@@ -140,7 +137,9 @@ export default function AreaAluno({ profile }) {
     return buildRecentEvolution(recentResults)
   }, [recentResults])
 
-  const isAdmin = profile?.role === 'admin' || profile?.email === 'sabrinasebben@sevbenoficial.com'
+  const weeklyProgress = useMemo(() => {
+    return buildWeeklyProgress(recentResults)
+  }, [recentResults])
 
   if (loading) {
     return (
@@ -167,107 +166,86 @@ export default function AreaAluno({ profile }) {
           </div>
         </div>
 
-        <nav className="app-nav">
-          <Link to="/area-do-aluno">Dashboard</Link>
-          <Link to="/configurar-edital">Configurar Edital</Link>
-          <Link to="/calculadora-premium">Calculadora</Link>
-          <Link to="/historico">Histórico</Link>
-          <Link to="/perfil">Perfil</Link>
-          {HOTMART_COURSE_URL ? (
-            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
-          ) : (
-            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
-          )}
-          {isAdmin && <Link to="/admin">Admin</Link>}
-          <button onClick={handleLogout}>Sair</button>
-        </nav>
+        <StudentNav profile={profile} onLogout={handleLogout} hotmartUrl={HOTMART_COURSE_URL} />
       </header>
 
       <main className="dashboard">
-        <section className={`student-command-hero level-${level}`}>
+        <section className={`student-command-hero level-${level}`} aria-label={`Situação atual: ${levelInfo.label}`}>
           <div className="student-hero-main">
-            <div className="kicker">Painel de comando</div>
-            <h1>{levelInfo.commercialLabel}</h1>
+            <div className="kicker">Seu painel hoje</div>
+            <h1>Seu próximo treino</h1>
             <p>
-              {getFirstName(profile.name) ? `${getFirstName(profile.name)}, ` : ''}{levelInfo.description}
+              {getFirstName(profile.name) ? `${getFirstName(profile.name)}, ` : ''}{nextActions[0].text}
             </p>
 
             <div className="student-hero-actions">
-              <Link className="btn btn-green" to="/calculadora-premium">Atualizar diagnóstico</Link>
-              <Link className="btn btn-dark" to="/historico">Ver evolução</Link>
+              <Link className="btn btn-green" to={nextActions[0].href}>{nextActions[0].cta}</Link>
             </div>
           </div>
 
-          <div className="student-countdown-card">
-            <span>TAF</span>
-            <strong>{dayInfo.value}</strong>
-            <small>{dayInfo.label}</small>
+          <div className="student-hero-aside">
+            <div className="student-countdown-card">
+              <span>TAF</span>
+              <strong>{dayInfo.value}</strong>
+              <small>{dayInfo.label}</small>
+            </div>
+            <div className="student-week-card">
+              <span>Progresso da semana</span>
+              <strong>{weeklyProgress.value}</strong>
+              <small>{weeklyProgress.label}</small>
+            </div>
           </div>
         </section>
 
         {message && <div className="form-message">{message}</div>}
 
         {!activeExam ? (
-          <section className="premium-panel onboarding-panel">
-            <div className="kicker">Primeiro passo obrigatório</div>
-            <h2>Configure seu edital para liberar o diagnóstico.</h2>
+          <section className="premium-panel onboarding-panel guided-onboarding">
+            <div className="kicker">Comece por aqui</div>
+            <h2>Organize sua preparação em quatro passos.</h2>
             <p>
-              O sistema precisa saber quais provas seu concurso cobra, os índices mínimos e a data prevista do TAF.
+              Complete esta sequência uma vez. Depois, o painel mostrará apenas o que você precisa fazer agora.
             </p>
+            <ol className="guided-steps">
+              <li className="done"><strong>1. Complete seu perfil</strong><span>Confira seus dados de acesso.</span></li>
+              <li className="active"><strong>2. Informe seu edital</strong><span>Selecione as provas, mínimos e a data do TAF.</span></li>
+              <li><strong>3. Veja seu plano</strong><span>Registre os resultados para liberar seu diagnóstico.</span></li>
+              <li><strong>4. Comece o treino</strong><span>Siga a prioridade indicada e acompanhe a evolução.</span></li>
+            </ol>
             <Link className="btn btn-green" to="/configurar-edital">Configurar meu edital</Link>
           </section>
         ) : (
           <>
-            <section className="student-top-grid">
-              <div className="student-progress-card">
-                <div className="student-card-head">
-                  <span>Preparação geral</span>
-                  <strong>{progress.value}%</strong>
+            <section className="premium-panel student-status-summary">
+              <div>
+                <div className="kicker">Sua situação hoje</div>
+                <h2>{buildStatusHeadline(minimumTests.length, diagnostics.length, safeTests.length)}</h2>
+                <p>{buildStatusExplanation(minimumTests.length, diagnostics.length, safeTests.length, criticalTests.length)}</p>
+              </div>
+
+              <div className="student-status-metrics">
+                <div className={`student-status-metric risk-${risk.key}`}>
+                  <span>Risco</span>
+                  <strong>{risk.label}</strong>
+                  <small>{risk.description}</small>
                 </div>
-
-                <div className="progress-bar-shell">
-                  <div className="progress-bar-fill" style={{ width: `${progress.value}%` }} />
+                <div className="student-status-metric">
+                  <span>Margem segura</span>
+                  <strong>{safeTests.length}/{diagnostics.length}</strong>
+                  <small>provas acima da meta segura</small>
                 </div>
-
-                <p>{progress.label}</p>
-              </div>
-
-              <div className={`student-risk-card risk-${risk.key}`}>
-                <span>Risco atual</span>
-                <strong>{risk.label}</strong>
-                <small>{risk.description}</small>
-              </div>
-
-              <div className="student-risk-card">
-                <span>Edital ativo</span>
-                <strong>{formatDisplayText(activeExam.exam_name || summary?.exam_name || '—')}</strong>
-                <small>{formatDisplayText(activeExam.institution || summary?.institution || 'Instituição não informada')}</small>
-              </div>
-
-              <div className="student-risk-card">
-                <span>Provas seguras</span>
-                <strong>{safeTests.length}/{diagnostics.length}</strong>
-                <small>Acima da meta segura.</small>
-              </div>
-            </section>
-            <section className="student-situation-grid student-situation-grid-single">
-              <div className="premium-panel student-readiness-panel">
-                <div className="kicker">Status do aluno</div>
-                <h2>{levelInfo.label}</h2>
-                <p>{levelInfo.long}</p>
-
-                <div className="readiness-tags">
-                  <span>{minimumTests.length}/{diagnostics.length} no mínimo</span>
-                  <span>{criticalTests.length} ponto(s) críticos</span>
-                  <span>{recentResults.length} registro(s) recentes</span>
+                <div className="student-status-metric">
+                  <span>Meu edital</span>
+                  <strong>{formatDisplayText(activeExam.exam_name || summary?.exam_name || '—')}</strong>
+                  <small>{formatDisplayText(activeExam.institution || summary?.institution || 'Instituição não informada')}</small>
                 </div>
               </div>
             </section>
 
-            <section className="premium-panel">
+            <section id="meu-plano" className="premium-panel">
               <div className="panel-head">
                 <div>
-                  <div className="kicker">Próximos passos</div>
+                  <div className="kicker">Meu plano de treino</div>
                   <h2>O que fazer agora</h2>
                   <p className="muted">
                     Ordem prática de execução para a próxima semana de preparação.
@@ -275,17 +253,14 @@ export default function AreaAluno({ profile }) {
                 </div>
               </div>
 
-              <div className="student-action-grid">
-                {nextActions.map((action, index) => (
-                  <div className={`student-action-card priority-${index + 1}`} key={action.title}>
-                    <div className="action-number">{index + 1}</div>
-                    <div>
-                      <h3>{action.title}</h3>
-                      <p>{action.text}</p>
-                      <Link to={action.href}>{action.cta}</Link>
-                    </div>
-                  </div>
-                ))}
+              <div className="student-primary-action">
+                <div className="action-number">1</div>
+                <div>
+                  <span className="action-label">Prioridade da semana</span>
+                  <h3>{nextActions[0].title}</h3>
+                  <p>{nextActions[0].text}</p>
+                </div>
+                <Link className="btn btn-green" to={nextActions[0].href}>{nextActions[0].cta}</Link>
               </div>
             </section>
 
@@ -376,39 +351,18 @@ export default function AreaAluno({ profile }) {
   )
 }
 
-function calculateGeneralProgress(diagnostics) {
-  if (!diagnostics.length) {
-    return {
-      value: 0,
-      label: 'Configure o edital e registre seus primeiros resultados.',
-    }
-  }
+function buildStatusHeadline(minimumCount, totalTests, safeCount) {
+  if (!totalTests) return 'Registre seus resultados para ver sua situação.'
+  if (minimumCount < totalTests) return `Você atingiu o mínimo em ${minimumCount} de ${totalTests} provas.`
+  if (safeCount < totalTests) return `Você atingiu o mínimo nas ${totalTests} provas, mas ainda precisa criar margem.`
+  return `Você tem margem segura nas ${totalTests} provas do seu edital.`
+}
 
-  const valid = diagnostics.filter((item) => item.percent_minimum !== null && item.percent_minimum !== undefined)
-
-  if (!valid.length) {
-    return {
-      value: 0,
-      label: 'Registre seus resultados para calcular a preparação geral.',
-    }
-  }
-
-  const average = valid.reduce((sum, item) => {
-    const percent = Math.min(Number(item.percent_minimum) || 0, 120)
-    return sum + percent
-  }, 0) / valid.length
-
-  const value = Math.max(0, Math.min(100, Math.round(average)))
-
-  const label = value < 70
-    ? 'Zona crítica: priorize base, técnica e regularidade.'
-    : value < 90
-      ? 'Em evolução: ainda falta consistência para o mínimo.'
-      : value < 100
-        ? 'Perto do índice: foco em margem de segurança.'
-        : 'Mínimo atingido nas provas registradas. Agora busque margem segura.'
-
-  return { value, label }
+function buildStatusExplanation(minimumCount, totalTests, safeCount, criticalCount) {
+  if (!totalTests) return 'A calculadora transforma seus resultados em um diagnóstico simples e mostra o próximo passo.'
+  if (criticalCount) return 'Há provas abaixo ou próximas do mínimo. Priorize a correção antes de buscar desempenho extra.'
+  if (safeCount < totalTests) return `O mínimo foi alcançado em ${minimumCount} de ${totalTests}, mas apenas ${safeCount} prova(s) estão acima da meta segura.`
+  return 'Mantenha a regularidade e registre novos resultados para confirmar que seu desempenho continua estável.'
 }
 
 // Esta rotina permanece pronta para uma próxima seção de foco tático.
@@ -804,4 +758,14 @@ function formatValueByUnit(value, unit, calculationType) {
   }
 
   return `${formatDecimal(value)} ${unit || ''}`.trim()
+}
+
+function buildWeeklyProgress(recentResults) {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+  const total = recentResults.filter((item) => new Date(item.result_date).getTime() >= weekAgo).length
+
+  return {
+    value: total,
+    label: total === 1 ? 'resultado registrado nesta semana' : 'resultados registrados nesta semana',
+  }
 }

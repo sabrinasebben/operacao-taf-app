@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import StudentNav from '../components/StudentNav'
 
 const CALCULADORA_DRAFT_KEY_PREFIX = 'operacao_taf_calculadora_draft_'
 const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
@@ -324,11 +325,7 @@ export default function CalculadoraPremium({ profile }) {
             </div>
           </div>
 
-          <nav className="app-nav">
-            <Link to="/area-do-aluno">Dashboard</Link>
-            <Link to="/configurar-edital">Configurar Edital</Link>
-            <button onClick={handleLogout}>Sair</button>
-          </nav>
+          <StudentNav profile={profile} onLogout={handleLogout} hotmartUrl={HOTMART_COURSE_URL} />
         </header>
 
         <main className="dashboard">
@@ -358,18 +355,7 @@ export default function CalculadoraPremium({ profile }) {
           </div>
         </div>
 
-        <nav className="app-nav">
-          <Link to="/area-do-aluno">Dashboard</Link>
-          <Link to="/configurar-edital">Configurar Edital</Link>
-          <Link to="/calculadora-premium">Calculadora</Link>
-          <Link to="/historico">Histórico</Link>
-          {HOTMART_COURSE_URL ? (
-            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
-          ) : (
-            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
-          )}
-          <button onClick={handleLogout}>Sair</button>
-        </nav>
+        <StudentNav profile={profile} onLogout={handleLogout} hotmartUrl={HOTMART_COURSE_URL} />
       </header>
 
       <main className="dashboard">
@@ -589,6 +575,27 @@ export default function CalculadoraPremium({ profile }) {
                 </tbody>
               </table>
             </div>
+
+            <section className="calculator-reading" aria-label="Leitura dos resultados atuais">
+              <div className="calculator-reading-head">
+                <div>
+                  <div className="kicker">Leitura simples</div>
+                  <h3>Onde você está em cada prova</h3>
+                </div>
+                <p>Resultado atual, meta segura e o que falta para alcançá-la.</p>
+              </div>
+
+              <div className="calculator-reading-grid">
+                {diagnostics.map((test) => (
+                  <div className="calculator-reading-card" key={`reading-${test.exam_test_id}`}>
+                    <strong>{test.test_name}</strong>
+                    <span>Atual: {test.latest_result_value ? formatValueByUnit(test.latest_result_value, test.unit, test.calculation_type) : 'sem resultado'}</span>
+                    <span>Meta: {formatValueByUnit(test.safe_goal_value, test.unit, test.calculation_type)}</span>
+                    <small>{describeGapToSafeGoal(test)}</small>
+                  </div>
+                ))}
+              </div>
+            </section>
 
             <div className="save-footer">
               <Link className="btn btn-dark" to="/area-do-aluno">
@@ -828,6 +835,23 @@ function getRecommendation(level, weakestTest) {
     track: 'A definir',
     focus: 'Diagnóstico',
   }
+}
+
+function describeGapToSafeGoal(test) {
+  const current = Number(test.latest_result_value)
+  const safeGoal = Number(test.safe_goal_value)
+
+  if (!Number.isFinite(current) || !Number.isFinite(safeGoal)) {
+    return 'Registre um resultado para saber o que falta.'
+  }
+
+  const difference = test.calculation_type === 'lower_is_better'
+    ? current - safeGoal
+    : safeGoal - current
+
+  if (difference <= 0) return 'Meta segura atingida. Mantenha a regularidade.'
+
+  return `Faltam ${formatValueByUnit(difference, test.unit, test.calculation_type)} para a meta segura.`
 }
 
 function formatCalculationType(type) {

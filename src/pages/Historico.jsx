@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import StudentNav from '../components/StudentNav'
 
 const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
 
@@ -247,13 +248,7 @@ export default function Historico({ profile }) {
             </div>
           </div>
 
-          <nav className="app-nav">
-            <Link to="/area-do-aluno">Dashboard</Link>
-            <Link to="/configurar-edital">Configurar Edital</Link>
-            <Link to="/calculadora-premium">Calculadora</Link>
-            <Link to="/perfil">Perfil</Link>
-            <button onClick={handleLogout}>Sair</button>
-          </nav>
+          <StudentNav profile={profile} onLogout={handleLogout} hotmartUrl={HOTMART_COURSE_URL} />
         </header>
 
         <main className="dashboard">
@@ -283,19 +278,7 @@ export default function Historico({ profile }) {
           </div>
         </div>
 
-        <nav className="app-nav">
-          <Link to="/area-do-aluno">Dashboard</Link>
-          <Link to="/configurar-edital">Configurar Edital</Link>
-          <Link to="/calculadora-premium">Calculadora</Link>
-          <Link to="/historico">Histórico</Link>
-          <Link to="/perfil">Perfil</Link>
-          {HOTMART_COURSE_URL ? (
-            <a className="hotmart-nav-link" href={HOTMART_COURSE_URL} target="_blank" rel="noreferrer">Hotmart</a>
-          ) : (
-            <Link className="hotmart-nav-link" to="/perfil">Hotmart</Link>
-          )}
-          <button onClick={handleLogout}>Sair</button>
-        </nav>
+        <StudentNav profile={profile} onLogout={handleLogout} hotmartUrl={HOTMART_COURSE_URL} />
       </header>
 
       <main className="dashboard">
