@@ -31,6 +31,38 @@ function getEventData(payload) {
   }
 }
 
+async function findAuthUserByEmail(supabase, email) {
+  let page = 1
+
+  while (page <= 10) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 })
+    if (error) throw error
+
+    const user = data?.users?.find((item) => item.email?.trim().toLowerCase() === email)
+    if (user) return user
+    if (!data?.nextPage) return null
+
+    page = data.nextPage
+  }
+
+  return null
+}
+
+async function saveStudentProfile(supabase, { userId, email, name, role, isActive }) {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({
+      user_id: userId,
+      email,
+      name: name || null,
+      role: role || 'student',
+      is_active: isActive,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' })
+
+  if (error) throw error
+}
+
 export default async function handler(request, response) {
   if (request.method !== 'POST') {
     response.setHeader('Allow', 'POST')
@@ -101,39 +133,40 @@ export default async function handler(request, response) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('user_id')
+    .select('user_id, role')
     .eq('email', eventData.email)
     .maybeSingle()
 
-  if (profile?.user_id) {
-    await supabase
-      .from('profiles')
-      .update({ is_active: isActive, updated_at: new Date().toISOString() })
-      .eq('user_id', profile.user_id)
+  let userId = profile?.user_id || null
 
-    await supabase
-      .from('hotmart_accesses')
-      .update({ user_id: profile.user_id, updated_at: new Date().toISOString() })
-      .eq('email', eventData.email)
+  if (!userId) {
+    const existingUser = await findAuthUserByEmail(supabase, eventData.email)
+    userId = existingUser?.id || null
   }
 
-  if (isActive && !profile?.user_id) {
+  if (isActive && !userId) {
     const { data: invitation, error: invitationError } = await supabase.auth.admin.inviteUserByEmail(eventData.email, {
       data: { name: eventData.name || null, access_source: 'hotmart' },
       redirectTo: process.env.APP_URL ? `${process.env.APP_URL}/login` : undefined,
     })
 
-    if (!invitationError && invitation?.user?.id) {
-      await supabase
-        .from('profiles')
-        .update({ is_active: true, updated_at: new Date().toISOString() })
-        .eq('user_id', invitation.user.id)
+    if (invitationError) throw invitationError
+    userId = invitation?.user?.id || null
+  }
 
-      await supabase
-        .from('hotmart_accesses')
-        .update({ user_id: invitation.user.id, updated_at: new Date().toISOString() })
-        .eq('email', eventData.email)
-    }
+  if (userId) {
+    await saveStudentProfile(supabase, {
+      userId,
+      email: eventData.email,
+      name: eventData.name,
+      role: profile?.role,
+      isActive,
+    })
+
+    await supabase
+      .from('hotmart_accesses')
+      .update({ user_id: userId, updated_at: new Date().toISOString() })
+      .eq('email', eventData.email)
   }
 
   return response.status(200).json({ ok: true, status })
