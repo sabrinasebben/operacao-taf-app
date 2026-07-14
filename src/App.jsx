@@ -1,6 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import Login from './pages/Login'
-import AreaAluno from './pages/AreaAluno'
 import ConfigurarEdital from './pages/ConfigurarEdital'
 import CalculadoraPremium from './pages/CalculadoraPremium'
 import Historico from './pages/Historico'
@@ -17,20 +16,12 @@ export default function App() {
 
       <Route
         path="/area-do-aluno"
-        element={
-          <ProtectedRoute>
-            {(profile) => <AreaAluno profile={profile} />}
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/calculadora-premium" replace />}
       />
 
       <Route
         path="/dashboard"
-        element={
-          <ProtectedRoute>
-            {(profile) => <AreaAluno profile={profile} />}
-          </ProtectedRoute>
-        }
+        element={<Navigate to="/calculadora-premium" replace />}
       />
 
       <Route

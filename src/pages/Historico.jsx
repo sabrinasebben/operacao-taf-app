@@ -405,7 +405,7 @@ export default function Historico({ profile }) {
               </div>
             </section>
 
-            <section className="premium-panel">
+            <section id="evolucao" className="premium-panel">
               <div className="panel-head">
                 <div>
                   <div className="kicker">Gráfico geral</div>
