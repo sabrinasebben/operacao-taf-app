@@ -207,14 +207,6 @@ export default function Login() {
 
             <button
               type="button"
-              className={mode === 'admin' ? 'active' : ''}
-              onClick={() => switchMode('admin')}
-            >
-              Primeiro acesso admin
-            </button>
-
-            <button
-              type="button"
               className={mode === 'reset' ? 'active' : ''}
               onClick={() => switchMode('reset')}
             >
@@ -255,6 +247,14 @@ export default function Login() {
               <div className="admin-access-note">
                 <strong>Aluno:</strong> seu acesso é liberado conforme a compra pela Hotmart. Não crie cadastro por aqui.
               </div>
+
+              <button
+                type="button"
+                className="admin-first-access-trigger"
+                onClick={() => switchMode('admin')}
+              >
+                Primeiro acesso administrativo
+              </button>
             </form>
           )}
 

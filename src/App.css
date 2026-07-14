@@ -2438,7 +2438,7 @@ input:focus {
 
 .login-mode-tabs {
   display: grid;
-  grid-template-columns: 1fr 1.35fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin: 18px 0;
 }
@@ -3147,6 +3147,23 @@ input:focus {
 .student-situation-grid-single .student-readiness-panel {
   min-height: 230px;
 }
+
+.admin-first-access-trigger {
+  align-self: center;
+  width: fit-content;
+  margin: 2px auto 0;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: #8E9AA8;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.admin-first-access-trigger:hover { color: var(--green); }
 
 .student-nav-more {
   position: relative;

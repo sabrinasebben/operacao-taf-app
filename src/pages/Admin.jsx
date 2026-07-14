@@ -15,6 +15,7 @@ export default function Admin({ profile }) {
   const [testResults, setTestResults] = useState([])
   const [summaries, setSummaries] = useState([])
   const [adminEmails, setAdminEmails] = useState([])
+  const [hotmartAccesses, setHotmartAccesses] = useState([])
 
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
@@ -73,7 +74,7 @@ export default function Admin({ profile }) {
     setLoading(true)
     setMessage('')
 
-    const [profilesResponse, adminsResponse, examsResponse, resultsResponse, summariesResponse] = await Promise.all([
+    const [profilesResponse, adminsResponse, examsResponse, resultsResponse, summariesResponse, hotmartResponse] = await Promise.all([
       supabase
         .from('profiles')
         .select('*')
@@ -98,6 +99,12 @@ export default function Admin({ profile }) {
       supabase
         .from('v_taf_summary')
         .select('*'),
+
+      supabase
+        .from('hotmart_accesses')
+        .select('email, status, last_event, updated_at')
+        .order('updated_at', { ascending: false })
+        .limit(1000),
     ])
 
     if (profilesResponse.error) {
@@ -117,6 +124,7 @@ export default function Admin({ profile }) {
     setStudentExams(examsResponse.data || [])
     setTestResults(resultsResponse.data || [])
     setSummaries(summariesResponse.data || [])
+    setHotmartAccesses(hotmartResponse.data || [])
     setLoading(false)
   }
 
@@ -304,9 +312,19 @@ export default function Admin({ profile }) {
     const withResults = studentRows.filter((row) => row.hasResults).length
     const highRisk = studentRows.filter((row) => row.risk.key === 'alto').length
     const safe = studentRows.filter((row) => row.level === 'blindagem' || row.level === 'performance').length
+    const withoutDiagnosis = studentRows.filter((row) => !row.hasExam || !row.hasResults).length
+    const latestActivityTime = testResults.reduce((latest, result) => {
+      return Math.max(latest, new Date(result.result_date || result.created_at || 0).getTime())
+    }, 0)
+    const activeLast30Days = studentRows.filter((row) => {
+      if (!row.latestResult?.result_date) return false
+      return latestActivityTime - new Date(row.latestResult.result_date).getTime() <= 30 * 24 * 60 * 60 * 1000
+    }).length
+    const hotmartActive = hotmartAccesses.filter((item) => item.status === 'active').length
+    const hotmartRevoked = hotmartAccesses.filter((item) => item.status === 'revoked').length
 
-    return { total, active, blocked, admins, withExam, withResults, highRisk, safe }
-  }, [studentRows, adminEmails])
+    return { total, active, blocked, admins, withExam, withResults, highRisk, safe, withoutDiagnosis, activeLast30Days, hotmartActive, hotmartRevoked }
+  }, [studentRows, adminEmails, hotmartAccesses, testResults])
 
   const recentActivity = useMemo(() => {
     return testResults
@@ -382,9 +400,7 @@ export default function Admin({ profile }) {
         </div>
 
         <nav className="app-nav">
-          <a href="/admin">Admin</a>
-          <a href="/area-do-aluno">Área do aluno</a>
-          <a href="/perfil">Perfil</a>
+          <a href="/admin">Painel admin</a>
           <button onClick={handleLogout}>Sair</button>
         </nav>
       </header>
@@ -449,6 +465,30 @@ export default function Admin({ profile }) {
             <span>Performance/Blindagem</span>
             <strong>{stats.safe}</strong>
             <small>Em zona mais segura.</small>
+          </div>
+
+          <div className="admin-kpi-card danger">
+            <span>Sem diagnóstico</span>
+            <strong>{stats.withoutDiagnosis}</strong>
+            <small>Sem edital ou sem resultado.</small>
+          </div>
+
+          <div className="admin-kpi-card good">
+            <span>Ativos em 30 dias</span>
+            <strong>{stats.activeLast30Days}</strong>
+            <small>Registraram teste recentemente.</small>
+          </div>
+
+          <div className="admin-kpi-card good">
+            <span>Acessos Hotmart</span>
+            <strong>{stats.hotmartActive}</strong>
+            <small>Compras ativas sincronizadas.</small>
+          </div>
+
+          <div className="admin-kpi-card danger">
+            <span>Revogados Hotmart</span>
+            <strong>{stats.hotmartRevoked}</strong>
+            <small>Reembolso, cancelamento ou chargeback.</small>
           </div>
 
           <div className="admin-kpi-card">
