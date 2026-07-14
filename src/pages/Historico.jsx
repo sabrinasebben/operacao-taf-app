@@ -5,13 +5,14 @@ import StudentNav from '../components/StudentNav'
 
 const HOTMART_COURSE_URL = import.meta.env.VITE_HOTMART_COURSE_URL || ''
 
-export default function Historico({ profile }) {
+export default function Historico({ profile, mode = 'history' }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [activeExam, setActiveExam] = useState(null)
   const [examTests, setExamTests] = useState([])
   const [results, setResults] = useState([])
   const [selectedTestId, setSelectedTestId] = useState('all')
+  const isEvolution = mode === 'evolution'
   const [deletingId, setDeletingId] = useState(null)
 
   useEffect(() => {
@@ -274,7 +275,7 @@ export default function Historico({ profile }) {
           <span className="brand-mark">◎</span>
           <div>
             <strong>OPERAÇÃO TAF</strong>
-            <small>Histórico de evolução</small>
+            <small>{isEvolution ? 'Evolução' : 'Histórico de testes'}</small>
           </div>
         </div>
 
@@ -284,10 +285,12 @@ export default function Historico({ profile }) {
       <main className="dashboard">
         <section className="welcome-card history-hero">
           <div>
-            <div className="kicker">Evolução Operação TAF</div>
-            <h1>Histórico por prova</h1>
+            <div className="kicker">Operação TAF</div>
+            <h1>{isEvolution ? 'Sua evolução' : 'Histórico de testes'}</h1>
             <p>
-              Acompanhe cada teste registrado, compare marcas e veja se sua preparação está criando margem real para o TAF.
+              {isEvolution
+                ? 'Compare suas marcas, veja tendências e acompanhe sua distância até a meta segura.'
+                : 'Consulte todos os testes registrados, organize suas marcas e corrija registros lançados por engano.'}
             </p>
           </div>
 
@@ -296,7 +299,7 @@ export default function Historico({ profile }) {
 
         {message && <div className="form-message">{message}</div>}
 
-        <section className="profile-grid history-summary-grid">
+        {isEvolution && <section className="profile-grid history-summary-grid">
           <div className="info-card">
             <span>Dias de teste</span>
             <strong>{totalSessions}</strong>
@@ -326,15 +329,17 @@ export default function Historico({ profile }) {
             <span>Último teste</span>
             <strong>{latestDate ? formatDate(latestDate) : '—'}</strong>
           </div>
-        </section>
+        </section>}
 
         <section className="premium-panel">
           <div className="panel-head">
             <div>
-              <div className="kicker">Avaliação</div>
-              <h2>Escolha a visualização</h2>
+              <div className="kicker">{isEvolution ? 'Análise de desempenho' : 'Filtrar registros'}</div>
+              <h2>{isEvolution ? 'Escolha a prova para analisar' : 'Escolha a prova para consultar'}</h2>
               <p className="muted">
-                Veja todas as provas juntas ou selecione uma prova específica para analisar a linha de evolução detalhada.
+                {isEvolution
+                  ? 'Veja todas as provas juntas ou selecione uma prova específica para analisar sua tendência.'
+                  : 'Veja todos os testes juntos ou selecione uma prova específica para consultar seus registros.'}
               </p>
             </div>
 
@@ -373,6 +378,7 @@ export default function Historico({ profile }) {
 
         {selectedTestId === 'all' ? (
           <>
+            {isEvolution && <>
             <section className="profile-grid selected-test-grid">
               <div className="info-card">
                 <span>Avaliação geral</span>
@@ -458,8 +464,9 @@ export default function Historico({ profile }) {
                 ))}
               </div>
             </section>
+            </>}
 
-            <section className="premium-panel">
+            {!isEvolution && <section className="premium-panel">
               <div className="panel-head">
                 <div>
                   <div className="kicker">Todos os registros</div>
@@ -475,10 +482,11 @@ export default function Historico({ profile }) {
                 deletingId={deletingId}
                 onDeleteGroup={handleDeleteResultGroup}
               />
-            </section>
+            </section>}
           </>
         ) : selectedStats ? (
           <>
+            {isEvolution && <>
             <section className="profile-grid selected-test-grid">
               <div className="info-card">
                 <span>Prova</span>
@@ -536,8 +544,9 @@ export default function Historico({ profile }) {
                 </div>
               )}
             </section>
+            </>}
 
-            <section className="premium-panel">
+            {!isEvolution && <section className="premium-panel">
               <div className="panel-head">
                 <div>
                   <div className="kicker">Linha do tempo</div>
@@ -556,7 +565,7 @@ export default function Historico({ profile }) {
                 deletingId={deletingId}
                 onDelete={handleDeleteResult}
               />
-            </section>
+            </section>}
           </>
         ) : (
           <section className="premium-panel">
@@ -570,7 +579,7 @@ export default function Historico({ profile }) {
           </section>
         )}
 
-        <section className="premium-panel">
+        {isEvolution && <section className="premium-panel">
           <div className="panel-head">
             <div>
               <div className="kicker">Comparativo geral</div>
@@ -595,7 +604,7 @@ export default function Historico({ profile }) {
               </div>
             ))}
           </div>
-        </section>
+        </section>}
 
         <p className="disclaimer">
           O histórico serve como ferramenta de acompanhamento. Resultado final depende de regularidade, recuperação,

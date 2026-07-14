@@ -46,7 +46,16 @@ export default function App() {
         path="/historico"
         element={
           <ProtectedRoute>
-            {(profile) => <Historico profile={profile} />}
+            {(profile) => <Historico profile={profile} mode="history" />}
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/evolucao"
+        element={
+          <ProtectedRoute>
+            {(profile) => <Historico profile={profile} mode="evolution" />}
           </ProtectedRoute>
         }
       />

@@ -7,7 +7,7 @@ export default function StudentNav({ profile, onLogout, hotmartUrl = '' }) {
     <nav className="app-nav student-nav">
       <Link to="/calculadora-premium">Calculadora</Link>
       <Link to="/historico">Histórico de testes</Link>
-      <Link to="/historico#evolucao">Evolução</Link>
+      <Link to="/evolucao">Evolução</Link>
       <details className="student-nav-more">
         <summary>Mais</summary>
         <div className="student-nav-more-menu">
