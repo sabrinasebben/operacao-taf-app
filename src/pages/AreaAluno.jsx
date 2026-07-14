@@ -13,8 +13,10 @@ export default function AreaAluno({ profile }) {
   const [recentResults, setRecentResults] = useState([])
 
   useEffect(() => {
+    // The function declaration is intentionally hoisted; it uses the current profile.
+    // eslint-disable-next-line react-hooks/immutability
     loadDashboard()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
 
   async function loadDashboard() {
@@ -123,15 +125,6 @@ export default function AreaAluno({ profile }) {
   const progress = useMemo(() => {
     return calculateGeneralProgress(diagnostics)
   }, [diagnostics])
-
-  const trainingFocus = useMemo(() => {
-    return buildTrainingFocus({
-      level,
-      daysToTaf,
-      criticalTests,
-      diagnostics,
-    })
-  }, [level, daysToTaf, criticalTests, diagnostics])
 
   const nextActions = useMemo(() => {
     return buildNextActions({
@@ -407,15 +400,19 @@ function calculateGeneralProgress(diagnostics) {
 
   const value = Math.max(0, Math.min(100, Math.round(average)))
 
-  let label = 'Você está construindo sua preparação.'
-  if (value < 70) label = 'Zona crítica: priorize base, técnica e regularidade.'
-  else if (value < 90) label = 'Em evolução: ainda falta consistência para o mínimo.'
-  else if (value < 100) label = 'Perto do índice: foco em margem de segurança.'
-  else label = 'Mínimo atingido nas provas registradas. Agora busque margem segura.'
+  const label = value < 70
+    ? 'Zona crítica: priorize base, técnica e regularidade.'
+    : value < 90
+      ? 'Em evolução: ainda falta consistência para o mínimo.'
+      : value < 100
+        ? 'Perto do índice: foco em margem de segurança.'
+        : 'Mínimo atingido nas provas registradas. Agora busque margem segura.'
 
   return { value, label }
 }
 
+// Esta rotina permanece pronta para uma próxima seção de foco tático.
+// eslint-disable-next-line no-unused-vars
 function buildTrainingFocus({ level, daysToTaf, criticalTests, diagnostics }) {
   if (!diagnostics.length) {
     return {

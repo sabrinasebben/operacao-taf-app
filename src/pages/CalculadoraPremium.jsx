@@ -27,7 +27,7 @@ export default function CalculadoraPremium({ profile }) {
 
   useEffect(() => {
     loadPremiumData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
 
   useEffect(() => {
@@ -267,9 +267,6 @@ export default function CalculadoraPremium({ profile }) {
   const criticalCount = diagnostics.filter((item) => item.taf_status === 'critico').length
   const belowMinimumCount = diagnostics.filter((item) =>
     ['critico', 'abaixo_do_minimo', 'proximo_do_minimo'].includes(item.taf_status)
-  ).length
-  const reachedMinimumCount = diagnostics.filter((item) =>
-    ['atingiu_minimo', 'atingiu_meta_segura'].includes(item.taf_status)
   ).length
   const reachedSafeGoalCount = diagnostics.filter((item) => item.taf_status === 'atingiu_meta_segura').length
 

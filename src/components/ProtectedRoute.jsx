@@ -25,7 +25,7 @@ export default function ProtectedRoute({ children }) {
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, user_id, name, email, target_exam, is_active')
+        .select('id, user_id, name, email, role, target_exam, is_active')
         .eq('user_id', currentSession.user.id)
         .maybeSingle()
 

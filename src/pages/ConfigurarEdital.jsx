@@ -25,8 +25,10 @@ export default function ConfigurarEdital({ profile }) {
   const [selectedTests, setSelectedTests] = useState({})
 
   useEffect(() => {
+    // The function declaration is intentionally hoisted; it uses the current profile.
+    // eslint-disable-next-line react-hooks/immutability
     loadInitialData()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
 
   useEffect(() => {
@@ -124,7 +126,7 @@ export default function ConfigurarEdital({ profile }) {
       setSexReference(draft.sexReference || profile?.sex || 'Masculino')
       setNotes(draft.notes || '')
       setSelectedTests(draft.selectedTests || {})
-    } catch (error) {
+    } catch {
       localStorage.removeItem(draftKey)
     }
   }
@@ -357,18 +359,6 @@ export default function ConfigurarEdital({ profile }) {
     localStorage.removeItem(draftKey)
     setSaving(false)
     navigate('/area-do-aluno')
-  }
-
-  function handleClearDraft() {
-    localStorage.removeItem(draftKey)
-    setExamName(profile?.target_exam || '')
-    setInstitution('')
-    setTafDate('')
-    setSexReference(profile?.sex || 'Masculino')
-    setNotes('')
-    setSelectedTests({})
-    setMessage('Rascunho limpo.')
-    loadInitialData()
   }
 
   async function handleLogout() {

@@ -17,8 +17,10 @@ export default function PerfilAluno({ profile }) {
   const [targetExam, setTargetExam] = useState(profile?.target_exam || '')
 
   useEffect(() => {
+    // The function declaration is intentionally hoisted; it uses the current profile.
+    // eslint-disable-next-line react-hooks/immutability
     loadActiveExam()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
 
   async function loadActiveExam() {

@@ -23,8 +23,10 @@ export default function Admin({ profile }) {
   const [savingAdminEmail, setSavingAdminEmail] = useState(false)
 
   useEffect(() => {
+    // The function declaration is intentionally hoisted; it uses the current profile.
+    // eslint-disable-next-line react-hooks/immutability
     checkAdminAccess()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile.user_id])
 
   async function checkAdminAccess() {
