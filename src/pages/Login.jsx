@@ -6,6 +6,7 @@ const MASTER_ADMIN_EMAIL = 'sabrinasebben@sevbenoficial.com'
 
 export default function Login() {
   const navigate = useNavigate()
+  const isPasswordRecovery = new URLSearchParams(window.location.search).get('redefinir') === '1'
   const [mode, setMode] = useState('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -13,10 +14,11 @@ export default function Login() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
 
   useEffect(() => {
     if (isPasswordRecovery) return
-
     async function redirectIfLogged() {
       const { data } = await supabase.auth.getSession()
 
@@ -28,7 +30,7 @@ export default function Login() {
     }
 
     redirectIfLogged()
-  }, [navigate, isPasswordRecovery])
+  }, [navigate])
 
   async function handleLogin(event) {
     event.preventDefault()
@@ -144,32 +146,33 @@ export default function Login() {
     )
   }
 
-  async function handleNewPassword(event) {
+  function handleNewPassword(event) {
     event.preventDefault()
-    setMessage('')
 
-    if (password.length < 6) {
-      setMessage('A nova senha precisa ter pelo menos 6 caracteres.')
+    if (newPassword.length < 6) {
+      setMessage('A nova senha deve ter pelo menos 6 caracteres.')
       return
     }
 
-    if (password !== confirmPassword) {
-      setMessage('As senhas não conferem.')
+    if (newPassword !== confirmNewPassword) {
+      setMessage('As senhas não coincidem.')
       return
     }
 
     setLoading(true)
-    const { error } = await supabase.auth.updateUser({ password })
-    setLoading(false)
+    setMessage('')
 
-    if (error) {
-      setMessage('Não foi possível atualizar a senha. Solicite um novo link de recuperação.')
-      return
-    }
+    supabase.auth.updateUser({ password: newPassword }).then(({ error }) => {
+      setLoading(false)
 
-    setMessage('Senha atualizada com sucesso. Agora você já pode entrar na Área Premium.')
-    setPassword('')
-    setConfirmPassword('')
+      if (error) {
+        setMessage('Não foi possível atualizar a senha. Solicite um novo link de recuperação.')
+        return
+      }
+
+      setMessage('Senha atualizada. Você já pode entrar com sua nova senha.')
+      setTimeout(() => navigate('/login', { replace: true }), 1200)
+    })
   }
 
   function switchMode(nextMode) {
@@ -177,6 +180,28 @@ export default function Login() {
     setMessage('')
     setPassword('')
     setConfirmPassword('')
+  }
+
+  if (isPasswordRecovery) {
+    return (
+      <div className="auth-shell">
+        <main className="login-grid">
+          <section className="login-form-panel">
+            <span className="auth-label">RECUPERAÇÃO DE SENHA</span>
+            <h1>Crie sua nova senha</h1>
+            <p>Escolha uma nova senha para acessar a Área Premium da Operação TAF.</p>
+            <form className="login-form" onSubmit={handleNewPassword}>
+              <label>Nova senha</label>
+              <input type="password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength="6" required autoComplete="new-password" placeholder="Digite a nova senha" />
+              <label>Confirme a nova senha</label>
+              <input type="password" value={confirmNewPassword} onChange={(event) => setConfirmNewPassword(event.target.value)} minLength="6" required autoComplete="new-password" placeholder="Repita a nova senha" />
+              {message && <p className="auth-message">{message}</p>}
+              <button className="auth-primary" type="submit" disabled={loading}>{loading ? 'SALVANDO...' : 'SALVAR NOVA SENHA'}</button>
+            </form>
+          </section>
+        </main>
+      </div>
+    )
   }
 
   const title =
@@ -220,13 +245,12 @@ export default function Login() {
 
         <section className="login-card">
           <div className="card-label">
-            {mode === 'login' ? 'Login' : mode === 'admin' ? 'Admin' : mode === 'new-password' ? 'Nova senha' : 'Recuperação'}
+            {mode === 'login' ? 'Login' : mode === 'admin' ? 'Admin' : 'Recuperação'}
           </div>
 
           <h2>{title}</h2>
           <p className="muted">{subtitle}</p>
 
-          {mode !== 'new-password' && (
           <div className="login-mode-tabs">
             <button
               type="button"
