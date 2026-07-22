@@ -15,6 +15,8 @@ export default function Login() {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
+    if (isPasswordRecovery) return
+
     async function redirectIfLogged() {
       const { data } = await supabase.auth.getSession()
 
@@ -26,7 +28,7 @@ export default function Login() {
     }
 
     redirectIfLogged()
-  }, [navigate])
+  }, [navigate, isPasswordRecovery])
 
   async function handleLogin(event) {
     event.preventDefault()
@@ -130,7 +132,7 @@ export default function Login() {
     setMessage('')
 
     const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
-      redirectTo: window.location.origin + '/login',
+      redirectTo: window.location.origin + '/login?redefinir=1',
     })
 
     setLoading(false)
@@ -140,6 +142,34 @@ export default function Login() {
         ? 'Não foi possível enviar o e-mail de recuperação.'
         : 'Enviamos um link de recuperação para o seu e-mail.'
     )
+  }
+
+  async function handleNewPassword(event) {
+    event.preventDefault()
+    setMessage('')
+
+    if (password.length < 6) {
+      setMessage('A nova senha precisa ter pelo menos 6 caracteres.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setMessage('As senhas não conferem.')
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.updateUser({ password })
+    setLoading(false)
+
+    if (error) {
+      setMessage('Não foi possível atualizar a senha. Solicite um novo link de recuperação.')
+      return
+    }
+
+    setMessage('Senha atualizada com sucesso. Agora você já pode entrar na Área Premium.')
+    setPassword('')
+    setConfirmPassword('')
   }
 
   function switchMode(nextMode) {
@@ -190,12 +220,13 @@ export default function Login() {
 
         <section className="login-card">
           <div className="card-label">
-            {mode === 'login' ? 'Login' : mode === 'admin' ? 'Admin' : 'Recuperação'}
+            {mode === 'login' ? 'Login' : mode === 'admin' ? 'Admin' : mode === 'new-password' ? 'Nova senha' : 'Recuperação'}
           </div>
 
           <h2>{title}</h2>
           <p className="muted">{subtitle}</p>
 
+          {mode !== 'new-password' && (
           <div className="login-mode-tabs">
             <button
               type="button"
