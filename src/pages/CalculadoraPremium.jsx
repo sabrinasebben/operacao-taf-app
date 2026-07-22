@@ -219,10 +219,20 @@ export default function CalculadoraPremium({ profile }) {
       return
     }
 
-    const rowsToInsert = diagnostics
-      .map((test) => {
-        const rawValue = resultValues[test.exam_test_id]
-        const parsedValue = parseResultValue(rawValue)
+    const parsedInputs = diagnostics.map((test) => ({
+      test,
+      parsed: parseResultInput(resultValues[test.exam_test_id], test),
+    }))
+
+    if (parsedInputs.some(({ parsed }) => parsed.invalid)) {
+      setMessage('Corrija os tempos informados. Use mm:ss, com segundos entre 00 e 59.')
+      setSavingResults(false)
+      return
+    }
+
+    const rowsToInsert = parsedInputs
+      .map(({ test, parsed }) => {
+        const parsedValue = parsed.value
 
         if (!parsedValue || parsedValue <= 0) return null
 
@@ -237,6 +247,12 @@ export default function CalculadoraPremium({ profile }) {
       })
       .filter(Boolean)
 
+    const hasInvalidTime = diagnostics.some((test) => parseResultInput(resultValues[test.exam_test_id], test).invalid)
+    if (hasInvalidTime) {
+      setMessage('Corrija os tempos informados. Use mm:ss, com segundos entre 00 e 59.')
+      setSavingResults(false)
+      return
+    }
     if (rowsToInsert.length === 0) {
       setMessage('Preencha pelo menos um resultado válido.')
       setSavingResults(false)
@@ -654,19 +670,34 @@ function parseNumber(value) {
   return Number(String(value).replace(',', '.'))
 }
 
-function parseResultValue(value) {
-  if (!value) return 0
-  const clean = String(value).trim().replace(',', '.')
+function parseResultInput(value, test) {
+  const clean = String(value ?? '').trim().replace(',', '.')
+  if (!clean) return { value: 0, invalid: false }
 
   if (clean.includes(':')) {
-    const parts = clean.split(':').map(Number)
-    if (parts.length === 2 && !Number.isNaN(parts[0]) && !Number.isNaN(parts[1])) {
-      return parts[0] * 60 + parts[1]
+    const parts = clean.split(':')
+    const minutes = Number(parts[0])
+    const seconds = Number(parts[1])
+    const isTimeTest = test?.calculation_type === 'lower_is_better' && test?.unit === 'segundos'
+
+    if (
+      isTimeTest
+      && parts.length === 2
+      && Number.isInteger(minutes)
+      && Number.isInteger(seconds)
+      && minutes >= 0
+      && seconds >= 0
+      && seconds < 60
+    ) {
+      return { value: minutes * 60 + seconds, invalid: false }
     }
+
+    return { value: 0, invalid: true }
   }
 
   const number = Number(clean)
-  return Number.isNaN(number) ? 0 : number
+  if (!Number.isFinite(number) || number < 0) return { value: 0, invalid: true }
+  return { value: number, invalid: false }
 }
 
 function formatDecimal(value) {
