@@ -3526,3 +3526,20 @@ input:focus {
     min-height: 36px;
   }
 }
+
+
+/* Identidade visual tridimensional Operação TAF */
+.brand-mark {
+  overflow: hidden;
+  color: transparent;
+  font-size: 0;
+  background:
+    linear-gradient(rgba(5, 8, 11, .08), rgba(5, 8, 11, .08)),
+    url("https://operacaotaf.com.br/assets/brand/operacao-taf-emblema-3d.png") center 37% / 162% auto no-repeat;
+}
+
+.login-copy .brand-mark {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+}
